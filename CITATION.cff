@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it using this metadata.
+type: software
+title: Policy Weight-Space Programming
+authors:
+  - family-names: Qu
+    given-names: Guanxing
+    affiliation: Interactive Embodied Intelligence Lab, Tsinghua University
+  - family-names: Zou
+    given-names: Xueyan
+    affiliation: Interactive Embodied Intelligence Lab, Tsinghua University
+repository-code: https://github.com/Pan-Chera/robot-weight-programming
