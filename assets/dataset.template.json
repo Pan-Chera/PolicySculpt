@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "template_only": true,
+  "dataset_id": "replace-with-real-dataset-id",
+  "source": "real_robot",
+  "robot_id": "replace-with-robot-and-configuration",
+  "policy_model_sha256": "replace-with-64-hex-digest",
+  "runtime_source_sha256": "replace-with-64-hex-digest",
+  "controller_sha256": "replace-with-64-hex-digest",
+  "calibration_id": "replace-with-calibration-version",
+  "observation_schema_id": "replace-with-versioned-policy-input-schema",
+  "action_schema_id": "replace-with-versioned-driver-action-schema",
+  "control": {
+    "rate_hz": 30,
+    "observation_timing": "pre_action",
+    "action_semantics": "absolute_joint_reference",
+    "units": {"joint_q_rad": "rad", "gripper_m": "m"},
+    "frames": {"joint_q_rad": "ordered-robot-joint-axes"},
+    "policy_fields": ["joint_q_rad", "gripper_m"],
+    "required_policy_fields": ["joint_q_rad", "gripper_m"]
+  },
+  "episodes": [
+    {
+      "episode_id": "episode-001",
+      "session_id": "session-001",
+      "physical_case_group": "case-001-including-all-repeat-resets",
+      "split": "development",
+      "exposed": true,
+      "log_path": "episode-001.jsonl",
+      "log_sha256": "replace-with-64-hex-digest",
+      "command_availability": {"proposed": true, "accepted": true, "executed": false},
+      "outcome": {"behavior_success": null, "termination": "unknown", "confidence": "unknown"}
+    }
+  ]
+}

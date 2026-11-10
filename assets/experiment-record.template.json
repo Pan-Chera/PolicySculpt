@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "template_only": true,
+  "plan_sha256": "replace-with-current-plan-file-hash",
+  "artifacts": [],
+  "artifact_record_fields": ["id", "path-relative-to-this-record-or-absolute", "sha256"],
+  "candidates": [],
+  "candidate_record_fields": ["id", "base_sha256", "representation-in_memory-or-checkpoint", "edit_program_sha256", "candidate_sha256-null-only-for-in_memory"],
+  "data_usage": [],
+  "data_record_fields": ["group_id", "optional-session_id", "optional-physical_case_group", "used_for", "exposed_before_freeze"],
+  "adapter_assurance": {
+    "level": "A0",
+    "scope_id": "replace-with-actual-adapter-and-tested-scope",
+    "base_sha256": null,
+    "runtime_source_sha256": null,
+    "candidate_sha256": null,
+    "evidence_refs": [],
+    "state_required": false,
+    "state_verified": false,
+    "sequence_required": false,
+    "sequence_verified": false,
+    "stochastic": false,
+    "rng_mode": "unverified",
+    "pairing_verified": false,
+    "pairing_evidence_refs": [],
+    "save_reload_verified": false,
+    "preservation_checked": false
+  },
+  "integrity": {
+    "aliases_views": "unverified",
+    "parametrizations": "unverified",
+    "dependent_caches": "unverified",
+    "reload_topology": "unverified"
+  },
+  "confirmation": {
+    "started": false,
+    "frozen_candidate_sha256": null,
+    "observed_candidate_sha256": [],
+    "inference_design_completed": false,
+    "stop_reason": "not-started"
+  },
+  "closed_loop": {
+    "source": "not-executed",
+    "completed_episodes": 0,
+    "human_executed": false,
+    "evidence_refs": []
+  },
+  "claims": [],
+  "claim_record_fields": ["kind", "evidence_refs", "optional-noise_comparison-same_perturbation-or-across_perturbations"],
+  "actual_usage": {"forward_frame_equivalents": 0, "analysis_seconds": 0, "hardware_episodes": 0},
+  "limitations": []
+}

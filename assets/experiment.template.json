@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "template_only": true,
+  "stage_id": "replace-with-new-stage-id",
+  "mode": "offline_only",
+  "task_mode": "single_hypothesis",
+  "entry_route": "insufficient_evidence",
+  "entry_reason_and_missing_evidence": "brief-routing-not-a-separate-approval-stage",
+  "stage_purpose": "exploration",
+  "decision_question": "state-the-question-that-changes-the-next-step",
+  "minimum_evidence_path": [],
+  "review_point": "time-or-batch-boundary-before-spending-the-full-cap",
+  "promotion_or_stop_rule": "predeclare-for-this-stage-not-an-obligation-to-run-all-checks",
+  "omitted_checks_and_reasons": [],
+  "cached_evidence_and_invalidation_keys": [],
+  "method_class": "analytic_wsp-or-statistical_intervention-or-constraint_repair-or-separately-authorized-fit-training",
+  "base_sha256": "replace-with-base-file-hash",
+  "runtime_source_sha256": "replace-with-source-hash",
+  "dataset_manifest_sha256": "replace-with-manifest-hash",
+  "authorization": {"source": "describe-actual-current-user-instructions", "hardware_execution": false, "deployment": false, "data_export": false},
+  "toolchain": [],
+  "toolchain_record_fields": ["name", "repo_url", "actual_revision_or_package_version", "dependency_environment", "source_reviewed", "installed", "synthetic_tested", "policy_adapter_tested", "human_robot_confirmed"],
+  "hypothesis": {
+    "observed_failure": "describe-observation-and-uncertainty",
+    "target_computation": "tensor-keys-and-computation-path",
+    "predicted_intermediate_change": "state-what-should-change-before-testing",
+    "falsification": "state-what-would-reject-the-hypothesis",
+    "alternative_explanations": [],
+    "assistance_received": []
+  },
+  "mechanism_evidence": {
+    "matched_development_groups": [],
+    "matching_rules_and_unmatched_coverage": "declare-before-outcomes-are-compared",
+    "first_expected_divergence": "episode-tick-module-pre-or-post",
+    "confounds_and_alternatives": [],
+    "static_interventions_and_controls": [],
+    "hook_off_restoration_report": null,
+    "permanent_weight_equivalence_report": null
+  },
+  "positive_control": {
+    "type": "synthetic-or-published-patch-or-not-needed-with-reason",
+    "source_revision_and_patch_hash": null,
+    "assistance_received": [],
+    "acceptance_scope": "toolchain-only-not-agent-discovery-or-robot-performance"
+  },
+  "candidate_construction": {
+    "program_path": "replace-with-deterministic-edit-program",
+    "learned_parameter_names": [],
+    "edit_representation": "sparse-or-low-rank-or-block",
+    "deployment_dtype": "replace-with-actual-dtype",
+    "coordinate_and_unit_basis": "explain-action-space-and-input-frames",
+    "scope_and_exit": "include-state-residual-after-direct-edit-exits",
+    "non_weight_changes": [],
+    "candidate_sha256": null
+  },
+  "preservation_panel": {
+    "scope": "small-targeted-screen-first-expand-only-for-promoted-candidate",
+    "acceptable_non_safety_tradeoffs": [],
+    "group_ids_and_exposure": [],
+    "phases_conditions_and_uncovered_regions": [],
+    "metrics_units_and_predeclared_thresholds": [],
+    "worst_window_and_tail_state_checks": [],
+    "independent_confirmation_groups": []
+  },
+  "offline_checks": {
+    "modes": [],
+    "mode_selection_reason": "select-only-modes-needed-for-this-question-include-state-tests-when-relevant",
+    "state_conditioning": "specify-source-timing-and-history-semantics",
+    "comparison_tolerance": "derive-from-runtime-dtype-and-device",
+    "controls": [],
+    "output_constraints": [],
+    "coverage_limitations": [],
+    "unseen_log_confirmation_available": false,
+    "hook_free_save_reload_report": null,
+    "complete_policy_adapter_verified": false
+  },
+  "budget": {"max_forward_frame_equivalents": null, "prior_actual_calls": null, "max_analysis_seconds": null, "max_candidates": null, "hardware_episodes": 0},
+  "stop_conditions": ["identity-or-input-contract-mismatch", "nonfinite-output", "declared-budget-exhausted"],
+  "closed_loop_followup": {"status": "not_authorized_by_this_template", "purpose": "only-if-it-changes-a-decision-probe-or-confirmation", "candidate_frozen": false, "independent_data_required_for_performance_claim": true, "stop_admission_boundary": "current-episode-or-pair-with-verified-cooperative-interface"}
+}
