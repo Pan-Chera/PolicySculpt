@@ -107,6 +107,18 @@ The reference check uses controlled float64 accumulation and casts at transform 
 
 Import `edit_output_writers(weight, direction, columns, alpha)` for directional subtraction on selected columns. Normalize the direction first. The operation leaves biases and unselected columns outside its scope.
 
+<a id="checkpoint-patch"></a>
+## Portable checkpoint patches
+
+Use `scripts/checkpoint_patch.py` to package an existing sparse edit for distribution. The patch binds the complete base file by SHA-256 and checks the complete reconstructed candidate state by a separate SHA-256. One compressed NPZ contains the versioned manifest, changed indices, and replacement bit patterns. The format draws on OpenWSP. [OpenWSP edit format](https://github.com/openwsp/openwsp/blob/main/docs/edit-format.md)
+
+```bash
+python3 scripts/checkpoint_patch.py create base.npz candidate.npz patch.npz
+python3 scripts/checkpoint_patch.py apply base.npz patch.npz reconstructed.npz
+```
+
+The tool also accepts flat PyTorch state dicts with `.pt` or `.pth` suffixes. It imports PyTorch for that path and uses `weights_only=True`. Use trusted checkpoints and patches. The scope covers NumPy-compatible NPZ arrays and plain contiguous PyTorch tensors without shared storage. Edits replace floating-point values with matching keys, shapes, and dtypes. Use the native adapter for nested checkpoints or tied weights. Repacking the base requires creating a new patch even if its tensor values match. The tool writes new files and verifies reconstructed tensor bits and state metadata. Verify model behavior separately through the native inference adapter.
+
 ## APRNN and EMMET as optional methods
 
 APRNN can apply when input regions and output specifications are explicit and the relevant activations and operators are supported. Verify solver dependencies, derive actual task constraints and retention specifications, run a bounded solve in an isolated copy, and verify the original runtime and out-of-region regression. Report the guarantee, actual error, and coverage. A ReLU proxy's guarantee covers that proxy. Report this route as `constraint_repair` and distinguish network specifications from physical closed-loop behavior. [APRNN project](https://github.com/95616ARG/APRNN) · [Paper](https://arxiv.org/abs/2304.03496)
