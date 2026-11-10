@@ -1,48 +1,48 @@
-# 真机采集：agent写程序，人执行
+# Hardware data collection by a human operator
 
-用于数据不足、字段不全或需要少量新闭环证据的情形。默认分工是：agent定义缺口并开发程序；操作者掌握设备、启动和停止运动、复位、标注；agent回收日志后离线分析。用户明确安排其它执行方式时按当前指令与真实接口处理。
+Use this workflow when existing logs lack the fields or new interactions needed for a decision. By default, the agent identifies the gap and prepares the collection program. A human operator controls the device, starts and stops motion, resets the task, and labels outcomes. The agent analyzes returned logs offline. Follow explicit user arrangements and the actual interfaces when roles differ.
 
-## 从问题反推采集单
+## Derive the collection plan from the question
 
-先说明已有日志能回答什么，以及为什么需要新数据。为每个新增字段写出来源、采样时机、时间戳、单位/参考系、缺失处理和它区分的假说。优先复用现有遥测与policy运行器；已有完整数据时先分析，不默认再采一次。
+State what existing logs can answer and what new evidence would change the decision. For each added field, specify source, sampling point, timestamp, units and frame, missing-value handling, and the hypothesis it helps distinguish. Reuse existing telemetry and the native policy runner. Analyze complete logs before collecting more.
 
-例如无法判断“模型提出错误动作”还是“动作未被执行”，需要同周期输入、原始输出、接受命令、可取得的驱动应用记录及传感器读回；仅补一段视频通常不能完成数值重建。视频可用于接触和人工介入核对，但要记录同步误差。不能为凑全字段臆造驱动并未提供的executed命令。
+To distinguish a bad proposed action from one that was never applied, collect same-cycle inputs, raw outputs, accepted commands, available driver application records, and sensor readback. Synchronized video can help inspect contact and human intervention. Record synchronization error and mark executed commands as unavailable when the driver does not report them.
 
-采集成功和自然发生的失败、相近条件与必要重复，不刻意制造危险失败。开发采样可按诊断需要富集某类案例，但不得把这种构成当总体成功率。确认任务则在执行前固定候选、顺序、条件和成功标准。用 `assets/collection-plan.template.json` 填写有限回合/时长/存储上限与停止条件；该模板不由日志校验器自动验收，也不授予运动许可。
+Collect successes and naturally occurring failures under comparable conditions, with necessary repeats. Avoid inducing hazardous failures. Targeted enrichment is suitable for diagnosis. Report its composition. Before confirmation, freeze the candidate, order, conditions, and success criteria. Use `assets/collection-plan.template.json` for episode, time, and storage limits and stopping rules. Confirm motion authorization separately.
 
-可按需用 `scripts/check_experiment.py --collection-plan <plan.json>` 核基本声明的一致性；`collector_mode`填`passive-recording`或`explicit-motion-runner`。这不验收SDK程序是否真实被动、不证明原硬件停止有效，也不是新增批准环节。
+Use `scripts/check_experiment.py --collection-plan <plan.json>` when a record consistency check helps. Set `collector_mode` to `passive-recording` or `explicit-motion-runner`. Verify actual SDK behavior and the hardware stop separately.
 
-有限上限不要求跑满；先约定最小可用交付、复盘点和安全边界停止方式。已有日志能回答的问题不重新采集；需要下一轮时按新增缺口裁剪，而非每次采完整任务/全初态套件。用户转向时由人停止后续回合入场，保留已采样本和未完成标记。
+Set a minimum useful deliverable, review point, and safe stop. Treat the budget as a ceiling. Collect additional data only for remaining gaps. If priorities change, have the operator stop admitting new episodes and retain acquired data with an incomplete marker where appropriate.
 
-## 按真实接口实现
+## Implement against the real interface
 
-先核对机器人型号、实际SDK版本、现有控制程序入口、推理代码与日志接口；接口未知时交明确缺项和可测试的适配器骨架，不编造可直接运行的SDK调用。记录采集器自身源码版本及依赖。程序至少分清两类：
+Verify the device model, SDK version, controller entry point, inference code, and logging interface. When an interface is unknown, list the gaps and provide a testable adapter skeleton. Record the collector version and dependencies. Identify its mode explicitly.
 
-- **被动记录**：订阅现有操作者/运行器产生的数据，不调用使能、回零、夹爪或关节运动接口。检查SDK连接/构造是否有自动动作副作用。
-- **带运行器的采集**：会调用已核验的原运行器控制机器人，在交接单显著注明动作及阶段。以显式执行入口启动，默认帮助/配置检查/模拟测试不能运动；不得加自动重试、自动复位、自动换候选或采完自动部署。
+- **Passive recording.** Subscribe to telemetry produced by the existing operator or runner. Check whether connecting or constructing an SDK object has motion side effects. Keep enable, homing, gripper, and joint motion calls outside this path.
+- **Collection with a motion runner.** Use the verified native runner and state what moves and when. Require an explicit motion entry point. Keep help, config checks, and simulated tests motion-free. Leave retries, resets, candidate switching, and deployment under explicit operator control.
 
-需要复用采集框架时按[LeRobot接入流程](open-source-tools.md#lerobot-collection)核真实版本、设备适配、本地数据路径和上传行为；默认保持现场运行器及人执行入口。不要把上游`replay`/`record --policy`命令当被动记录程序。
+When reusing a collection framework, verify its version, device integration, local data paths, and upload behavior. Prefer the site's existing runner and human execution entry point. Inspect upstream `replay` or `record --policy` before choosing a passive recorder. [LeRobot collection integration](open-source-tools.md#lerobot-collection)
 
-无论哪类，保留原控制器与硬件保护。采集器不为了记录数据改变控制频率、限位或动作。不要在实时控制回调中同步写大图像/压缩文件；采用适合实际运行器的有界缓冲、独立写入和丢帧/延迟计数，记录原始序号，不能把缺帧重编号后称完整轨迹。磁盘不足、写入故障或缓冲满的处置与已有控制器明确对接：采集失败状态必须可见，运动是否停止由经核验的原停止接口/操作者处理，不能用“停止日志”冒充停止机器人。
+Preserve the original controller, control rate, limits, and hardware protections. Keep synchronous large-image writes or compression off the real-time callback. Use bounded buffering, a separate writer, and counters for dropped frames and delay. Keep original sequence numbers. Decide how disk, writer, or buffer failures are signaled to the existing controller. The verified stop mechanism and operator retain responsibility for motion.
 
-每episode生成唯一ID，记录session/case分组、实际模型/runtime/controller/标定身份、操作者选择的条件、reset与开始/结束事件。尽可能在reset前开启记录并保留完整前缀；记录真实pre-state来源、RNG、历史动作、chunk缓存和人工介入。保留原始传感数据与经过编码的实际policy输入，体积大时按时间戳/内容hash引用外部文件。不能用画面估计替代当时实际网络输入。
+Give every episode a unique ID. Record session and case groups, actual model, runtime, controller and calibration, operator-selected conditions, reset, and start and end events. Start logging before reset when feasible and keep the necessary prefix. Record prior-state provenance, RNG, action history, chunk caches, and human intervention. Preserve raw sensor data and actual encoded policy inputs. Reference large files by timestamp or content hash.
 
-中断/急停/异常退出留下可读前缀和未完成标记，不写成成功结束。回合后提示操作者填写成功/失败/不确定、介入与原因置信度；这些是audit字段，不混入policy输入。不能把人工救援成功计为自主policy成功。
+Leave readable prefixes and incomplete markers for interruptions, emergency stops, and abnormal exits. Ask the operator to label success, failure, or uncertainty, interventions, and confidence in the cause. Keep those fields in the audit. Classify outcomes with human rescue separately.
 
-## 交给操作者的最小包
+## Minimum operator package
 
-1. 采集目的、是否运动、兼容设备/软件和固定模型版本。
-2. 可运行程序、明确配置、依赖及数据保存位置，不只给伪代码。
-3. 完全脱离硬件的合成输入自检命令，以及与之分开的、确无动作副作用的设备/字段检查入口；接口做不到只读时直接说明。
-4. 简短操作单：检查配置 → 开始记录 → 人按原流程运行/复位 → 标记结果 → 结束并检查摘要。给出正常结束、异常处理和原硬件停止方式；说明关闭终端、Ctrl-C与硬件急停的实际区别。
-5. 每轮预定条件/顺序、有限上限和停止条件，以及需要返回的目录/manifest/摘要；原始数据导出遵守现有授权。
+1. Collection purpose, motion status, compatible hardware and software, and frozen model version.
+2. Runnable program, configuration, dependencies, and output location.
+3. A fully hardware-free synthetic self-test, plus a separate device or field check verified to have no motion side effects where the interface permits it. State any read-only limitations.
+4. A short run sheet covering config check, recording, normal operation and reset, outcome annotation, and final summary. Include normal shutdown, abnormal handling, and the native hardware stop. Explain the practical differences between closing the terminal, Ctrl-C, and the emergency stop.
+5. Planned conditions and order, bounded limits and stopping rules, and the directory, manifest, or summary to return. Follow existing data export authorization.
 
-先用合成数据或现有日志验证序列、时间戳、字段、状态快照、模型身份、回合边界、人工标注、缺失/中断、存储上限与输出完整性。此测试不验证真实SDK运动、传感时延或接触安全；首次现场运行由人先核验短段数据是否够用，再按计划采完整轮次，避免大量采完才发现无法重建。
+Use synthetic inputs or existing logs to check sequence, timing, fields, state snapshots, model identity, episode boundaries, annotations, missing data, interruptions, storage limits, and output integrity. For first hardware use, have the operator verify a short segment before collecting the full planned batch. Physical motion, sensor latency, and contact safety need hardware evidence.
 
-采集器、runtime、schema和相关标定未变且已有有效短段核验时可引用该证据，不要求为每个权重变体重新做整套采集器验收。短段检查仅在新问题/变化使证据失效时重做；根据实际回收数据继续核身份、完整性与介入记录。
+Reuse valid short-segment evidence when the collector, runtime, schema, and relevant calibration stay the same. Repeat checks when a new question or dependency invalidates that evidence. Verify identity, completeness, and interventions on the actual returned data.
 
-## 回收后再决定下一步
+## Review returned data
 
-核对计划与实际身份/条件/介入/中断，检查首段base重建与日志缺口。修复采集程序后新旧版本分开；不静默修补原记录。缺数据时提出针对性的下一份采集单，而不是让人反复重放某条轨迹。
+Compare planned and actual identities, conditions, interventions, and interruptions. Check baseline reconstruction on the first segment and identify log gaps. Keep collector versions and their records separate after fixes. Request the smallest useful next collection when evidence is missing.
 
-诊断数据读过即算暴露。由人执行的冻结确认，仍按实际条件判定独立性、配对资格与日志完整性；操作者可知版本时注明未盲化。离线筛查结束后若需要比较候选，另交冻结的base/候选采集单，人执行新回合，不能从旧behavior日志推导候选成功率。
+Treat all diagnosis data as exposed once inspected. For human-run frozen confirmation, check actual independence, pairing, and log completeness. Record whether the operator knew the versions. For candidate closed-loop comparisons, hand the operator a separate frozen plan for baseline and candidate episodes. Historical behavior logs support claims about the policy that generated them.

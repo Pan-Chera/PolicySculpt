@@ -1,60 +1,60 @@
-# 日志契约与离线运行
+# Log contract and offline execution
 
-## 最小交接
+## Minimum handoff
 
-取得可信checkpoint、冻结推理代码、输入编码/归一化、实际动作ABI与日志来源。先找已有资产再询问缺项，不为通用化强制重训。加载不可信pickle会执行代码，优先安全权重格式/受限加载；非受限加载仅用于已核实可信来源。
+Obtain a trusted checkpoint, frozen inference code, input encoding and normalization, the actual action interface, and log provenance. Look for existing assets before requesting missing items. Prefer safe weight formats and restricted loading. Unrestricted pickle loading can execute code, so reserve it for verified trusted sources.
 
-`assets/dataset.template.json` 是契约实例，不是通用机器人接口。`template_only=true` 的模板不能准入；填入真实元数据、文件hash与日志后再置false。
+`assets/dataset.template.json` is an example of the log contract. A template with `template_only=true` is ineligible. Fill in actual metadata, file hashes, and logs before setting it to false.
 
-| 元数据 | 用途 |
+| Metadata | Purpose |
 |---|---|
-| model/runtime/controller/calibration identity | 分离模型问题与代码、设备、标定变化 |
-| observation/action schema、单位、参考系、时钟与频率 | 避免rad/degree、绝对/增量、TCP/grasp或时序混淆 |
-| episode/session/physical_case_group | 防重复reset、相邻片段、同采集批次泄漏 |
-| log hash、real_robot/simulation/synthetic来源 | 固定证据，不将仿真验收写成真机验收 |
-| observation白名单、必需字段、缺失与估计不确定性 | 缺项不默默填真值 |
-| proposed/accepted/executed命令及来源、实测读回 | 不能把神经输出当已执行动作 |
-| pre-state来源和timing、reset/RNG/动作块 | 恢复循环、随机或分块policy计算上下文 |
-| outcome/终止/超时及注释可信度 | 评价属于behavior policy，不能挪给候选 |
+| Model, runtime, controller, and calibration identities | Separate model issues from code, device, and calibration changes |
+| Observation and action schemas, units, frames, clocks, and frequencies | Distinguish radians from degrees, absolute from relative commands, TCP from grasp frames, and timing |
+| Episode, session, and physical case group | Prevent leakage across repeated resets, nearby segments, and collection batches |
+| Log hash and `real_robot`, `simulation`, or `synthetic` source | Bind the evidence and identify the execution setting |
+| Observation allowlist, required fields, missing values, and estimation uncertainty | Make absent observations explicit |
+| Proposed, accepted, and executed commands with provenance, plus sensor readback | Distinguish model output from actual execution |
+| Prior-state provenance and timing, reset, RNG, and action chunks | Reconstruct recurrent, stochastic, and chunked policy computations |
+| Outcome, termination, timeout, and annotation confidence | Attribute observed outcomes to the behavior policy |
 
-位姿可以是传感估计，保留置信度与标定。policy需要物体位姿而日志没有时，拒绝完整前向或声明受限分析，不能用未来真值补齐。真实触觉若原属部署输入可以使用，仿真接触真值不能冒充触觉。同步保存发送、接受、应用和采样时间；驱动确认不证明跟踪准确。
+Keep confidence and calibration for estimated poses. If required object poses are missing, narrow the analysis or decline full replay. Use deployment-time tactile inputs when available and keep simulator contact ground truth in the audit. Record send, acceptance, application, and observation times separately. A driver acknowledgment confirms receipt, while tracking accuracy requires readback.
 
-## JSONL行
+## JSONL rows
 
-每行包含episode_id、tick、单调timestamp_s、observation、commands，可另有internal_state与audit。observation仅白名单字段；audit可以有outcome/教师/接触证据但不得传给policy。缺失命令用null并声明原因，不用零向量冒充。
+Each row contains `episode_id`, `tick`, monotonic `timestamp_s`, `observation`, and `commands`, with optional `internal_state` and `audit`. Restrict observations to allowlisted fields. Outcomes, teacher outputs, and contact evidence can be recorded under `audit` and kept outside policy inputs. Use `null` for missing commands and record why.
 
-commands的proposed/accepted/executed各为 `{value, provenance}`；传感器读回单列。动作前观测与本周期命令对齐，下一个观测是旧命令后果。过滤后不能把缺tick拼成完整循环轨迹。动作块需记录生成时刻、chunk索引、缓存/聚合与真正发送的子动作，不将每个servo tick算作一次新policy调用。
+Record `proposed`, `accepted`, and `executed` as `{value, provenance}` and keep sensor readback separate. Align each observation with the command issued that cycle. The next observation reflects the earlier command. Preserve gaps after filtering. For action chunks, record generation time, chunk index, caching and aggregation, and the sub-action actually sent. Count policy calls at generation time.
 
-## 两个分析模式
+## Two analysis modes
 
-**logged_state_one_step**：固定 `o_t, h_pre, actual_history, phase/age` 比较两模型。post-state必须按真实源码转换或从前缀恢复，不能直接当pre-state。将base pre-state注入候选是局部计算干预；新权重下该状态可能不可达，需要注明。
+**`logged_state_one_step`.** Compare both policies on the same `o_t, h_pre, actual_history, phase/age`. Convert post-state to pre-state using the original implementation or reconstruct it from the prefix. Injecting baseline state into the candidate is a local computational intervention. Report whether that state might be unreachable under the edited policy.
 
-**fixed_observation_sequence**：各模型从reset或可证重建状态开始递推内部hidden/phase，物理观测仍固定。若冻结behavior phase日程隔离动作层，写明conditioning，不能称完整policy自由递推。previous-action用实际执行命令还是候选生成命令，必须命名；后者与固定物理观测通常不一致，仅为诊断。
+**`fixed_observation_sequence`.** Let each model update its own hidden state and phase from reset or a verified reconstruction, with physical observations held fixed. If the original phase schedule is frozen to isolate an action layer, report this conditioning. State whether previous actions come from executed commands or candidate outputs. Candidate actions paired with fixed observations usually serve a diagnostic purpose.
 
-随机policy/diffusion采样/dropout需固定并记录RNG/配置；无法恢复时报告重复前向范围，不将抽样差当权重效应。保持部署dtype、解码和clamp；训练模式和BatchNorm统计变化会污染对照。诊断hook额外运行整层也要计调用。
+Control and record RNG and configuration for stochastic policies, diffusion sampling, and dropout. If recovery is unavailable, report variation across repeated forwards. Keep deployment dtype, decoding, and clipping consistent. Training mode and BatchNorm updates can confound comparisons. Count any extra forwards performed by diagnostic hooks.
 
-同seed不自动保证对应扰动相同。按[随机性协议](adapter-and-integrity.md#rng-protocol)选择显式随机输入、核验随机流或有界重复采样，分别说明同扰动效应与跨扰动稳定性。适配器结论按[验收状态](adapter-and-integrity.md)限于实际已重建范围；共享/视图/包装及缓存审计随目标通路检查，不只数state_dict键。
+Use explicit noise, verified random streams, or bounded repeats. Separate effects under matched perturbations from stability across perturbations. Scope claims to the reconstruction actually verified, and audit sharing, views, wrappers, and caches relevant to the target computation. [Randomness protocol](adapter-and-integrity.md#rng-protocol) · [Adapter acceptance](adapter-and-integrity.md)
 
-## 实现模型适配器
+## Implement the model adapter
 
-复用原推理编码/解码，提供三个明确操作：`reset(metadata)`、`snapshot_pre_state()`、`step(observation, state, rng) -> (raw_output, decoded_command, next_state, diagnostics)`。状态包含hidden、滤波/积分、上一动作、阶段与动作块缓存等实际依赖；不只保存RNN hidden。若原runtime是可变对象，先隔离实例并深拷贝状态，不能让base和候选共享缓存。
+Reuse the original inference encoding and decoding. For tasks that require state, expose `reset(metadata)`, `snapshot_pre_state()`, and `step(observation, state, rng) -> (raw_output, decoded_command, next_state, diagnostics)`. Include actual dependencies such as hidden state, filters and integrators, previous actions, phases, and chunk caches. Isolate runtime instances and deep-copy mutable state to keep baseline and candidate caches separate.
 
-先在无环境、无驱动进程内重建base，保存逐帧误差与第一个超容差位置，再加入候选：单步模式向两个独立实例注入同一pre-state；序列模式分别reset，并记录各自历史语义。外部观测冻结、内部状态演化、行为日程固定三者写到报告，不能用一个“replay”标签混淆。只导出白名单输入；生成报告可读audit，执行policy的函数不可读audit。白名单检查仅限顶层字段，嵌套结构/shape/dtype/标量范围由适配器按真实schema检查。
+Reconstruct the baseline in a process without the environment or hardware driver. Record per-frame errors and the first point outside tolerance. Then add the candidate. In single-step mode inject the same prior state into both isolated instances. In sequence mode reset each model and document its history semantics. Report separately which observations, internal states, and behavior schedules are fixed or evolving. Export only allowlisted inputs. Audit data is available to reporting and kept outside the inference function. The allowlist covers top-level fields. The adapter checks nested structure, shapes, dtypes, and ranges against the actual schema.
 
-输出本轮所需逐帧数值差分、阶段/饱和/退出诊断、episode聚合及最差窗口；保留动作前后语义。晋级候选应有部署精度下的实际张量差分、相关base重建证据、作用窗与适用的成功保留结果。若模块依赖机器人驱动，先提供脱离驱动的纯推理入口；不能为了“离线运行”启动运动服务。此skill附带的是契约校验器，具体模型适配器须按实际源码实现，不宣称已有通用推理引擎。
+Report the per-frame differences, phase, saturation, and exit diagnostics, episode aggregates, and worst windows needed for the current question. Preserve the distinction between pre-action and post-action values. Before promoting a candidate, record the actual diff at deployment precision, relevant baseline reproduction, the effect window, and applicable retention results. If inference depends on a robot driver, expose a driver-free entry point. This skill ships a contract checker. Implement the model adapter using its native inference code.
 
-以上报告范围随本轮阶段选择：内存初筛可只保存代表窗口与差分；晋级候选再扩展适用的保留面板和保存重载。相同base/runtime/输入/状态/dtype/RNG已验证的前向可缓存，按依赖失效重算，不为每个候选重复base全轨迹。缓存与必要前缀规则见[研究效率](research-efficiency.md)。
+During initial in-memory screening, retain representative windows and diffs. Expand applicable retention checks and save and reload promoted candidates. Reuse baseline forwards when model, runtime, input, state, dtype, and randomness match. Recompute when a relevant dependency changes. [Research efficiency](research-efficiency.md)
 
-随附另有[单层仿射折叠工具](open-source-tools.md#affine-helper)，只处理已给定P/c下的局部代数与数值检查。实际adapter仍须支持所需模型重建、状态隔离与适用模式；晋级候选去hook保存重载，涉及状态的候选检查递推/退出，静态网络不重复跑无额外信息的模式。不能拿工具的等价报告代替实际runtime验收。
+The bundled affine helper checks a local transformation for a given `P` and `c`. The adapter still owns model reconstruction, isolated state, and the chosen comparison modes. Reload promoted candidates without hooks and check recurrence and exit behavior when state matters. Skip sequence checks for static networks when they add no evidence. [Affine folding helper](open-source-tools.md#affine-helper)
 
-## 契约检查
+## Contract check
 
 ```bash
 python3 scripts/validate_bundle.py --manifest dataset.json --check-logs --evidence evidence.json
 ```
 
-脚本只用标准库读取JSON/JSONL/hash，检查身份格式、严格时序、白名单、有限值、命令来源和split冲突，不运行模型或环境。`metadata_valid_only`不是性能门，也不能保证用户填写的provenance真实。
+The script uses the standard library to inspect JSON, JSONL, and hashes. It checks identity formats, timing, the allowlist, finite values, command provenance fields, and split conflicts. `metadata_valid_only` describes metadata conformance. Model behavior and claimed provenance require their own evidence.
 
-这是完整契约的严格检查，不要求所有受限分析都先拿到通过结果。日志有缺项时说明哪些比较仍成立、哪些无法重建，继续成立的静态/局部分析；不伪造hash、命令或pre-state使校验器过门，也不把受限结果说成完整验收。
+Use strict contract checks where full log acceptance is needed. When logs are incomplete, state which comparisons remain valid and continue those local or static analyses. Preserve actual hashes, commands, and prior state and label any unsupported reconstruction.
 
-同session或同物理case的episode必须同split。已暴露episode补标签后仍暴露。分组导致数据过少时只交开发/回归证据，不为凑holdout偷放宽。未来真机适配需要真实日志核验时钟、实际指令链、标定与感知缺失；合成/仿真工具测试不证明这些条件。
+Keep episodes in the same session or physical case in the same split. Adding labels to exposed episodes leaves them exposed. If groups leave too little data, report development or regression evidence. Hardware adaptation requires real logs to verify timing, the command chain, calibration, and missing sensor observations.

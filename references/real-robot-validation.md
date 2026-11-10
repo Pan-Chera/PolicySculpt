@@ -1,50 +1,50 @@
-# 真机确认：少量新执行，不要求精确重放
+# Hardware confirmation with new executions
 
-离线可验证契约、计算作用、部分动作约束与覆盖，不能证明未来物理分布、接触/碰撞或成功。只有支持假设、校准和独立评估成立才讨论OPE；确定性低覆盖连续动作日志通常不提供有效重要性比率。另训world model/critic不是默认任务。
+Offline checks establish contract conformance, computation, and some output constraints within their coverage. Physical distributions, contact, collision, and task success require physical evidence. Discuss off-policy evaluation only with credible support assumptions, calibration, and independent assessment. Low-coverage continuous-action logs from a deterministic policy generally lack usable importance ratios. Train a world model or critic only as a separately scoped task.
 
-先按[研究效率](research-efficiency.md)区分有限闭环探针与正式确认：探针回答未知响应，可按事前边界适应性结束并作为开发数据；正式确认支持冻结候选的收益声明。不是所有离线草稿都需要立即开启完整闭环测试，也不要求先在离线证明物理收益才允许提出由人执行的有限探针。
+Use a bounded closed-loop probe to learn an unknown response. It can stop adaptively within predetermined bounds and remains development evidence. Use formal confirmation to support a frozen candidate's benefit claim. Propose a limited human-run probe when it can resolve a physical uncertainty. [Research efficiency](research-efficiency.md)
 
-## 实验单
+## Run sheet
 
-在已有授权范围内明确机器人/驱动/标定/控制器、唯一base和候选hash、任务/工作区、可见初态条件及允许差异、动作单位/频率/块长度、原安全联锁/人工停止通道、成功定义、顺序、有限预算、复盘点、停止条件及原模型回滚。用户已授权且接口就绪时交人按计划执行；缺少运动授权或关键条件时交可审查计划与缺项，agent继续可行离线工作，不以skill作许可。
+Within existing authorization, identify the robot, driver, calibration, controller, baseline and candidate hashes, task, workspace, observable initial conditions and tolerances, action units, control rate and chunk length, native interlocks and human stop, success criteria, order, budget, review point, stop conditions, and rollback. Hand the plan to the operator when the interface and authorization are ready. If motion authorization or key conditions are missing, deliver a reviewable plan and continue applicable offline work.
 
-保留原原生限位、碰撞/力控制、工作区、动作监控和硬件停止。离线限位/动作差门不能替代它们，不为候选过门更改。继续不依赖硬件的可行工作。
+Preserve native limits, collision and force controls, workspace limits, action monitoring, and hardware stop. Apply offline output limits and retention thresholds separately.
 
-## 初态与统计
+## Initial conditions and statistics
 
-记录关节/速度、物体估计与置信度、夹爪、场景及确有关系的温度/电量/标定。无需逐位克隆，按预先声明条件分层、组内随机交错base/candidate，必要时跨日或操作者重复。不能看结果后选“足够接近”初态剔除失败。
+Record joints and velocities, object estimates and confidence, gripper and scene state, and relevant temperature, battery, or calibration. Exact bitwise hardware resets are unnecessary. Define strata before the run and randomize the baseline and candidate order within comparable conditions. Repeat across days or operators when relevant. Apply initial-condition rules before seeing outcomes.
 
-真正可配对才用配对统计；同分布两批运行按独立/分层试验分析，不套伪McNemar。重复同case估计重复性，不增加初态覆盖；同seed不保证真机同状态。
+Use paired statistics only for genuine pairs. Analyze two independent runs under similar distributions as independent or stratified samples. Repeated runs of one case measure repeatability. Document actual initial states even when seeds match.
 
-确认之前冻结唯一候选和方案，不先跑base挑失败后称随机确认。策略失败和退化全部保留，不因中途p值无限加样。需要新研究时保留旧结论，另记新问题/设计和多次检验限制。
+Freeze one candidate and the protocol before confirmation. Keep baseline-selected failures in targeted development. Preserve all valid policy failures and regressions. Use the fixed endpoint or a valid prespecified sequential design. Record later research questions separately with their multiplicity limits.
 
-没有默认必须跑满的固定样本数。为有效结论选适当终点，而非为“完整”扩大旧候选测试；精度有限时可交未决结论。探索中不要求全部成功case零退化或动作零变化，按事前任务目标比较收益/代价，绝对安全条件不参与取舍。正式确认如需序贯停止，规则与适用推断须事前确定。
+Choose the endpoint for the effect, precision, and decision. Report inconclusive results when precision is limited. Predetermine task-based retention trade-offs and keep absolute safety conditions separate.
 
-## 停止与解释
+## Stops and interpretation
 
-- 技术无效：时钟、日志、模型身份、执行链错误；保留前缀和费用，修复后按有效授权安排。
-- 安全停止：原生/硬件/工作区/监控触发；停止运动，不改阈值继续。
-- 策略失败：超时、未释放、未保持等任务未达标；是样本，不当技术故障剔除。
-- 科学终点：样本完成、假说被否定或候选不晋级；封存，不自动部署。
-- 用户/优先级转向：停止后续入场，让已启动回合/配对在安全边界收尾；记录提前结束与实际样本，不把未完成固定终点确认当已完成、不据此证明无效。记录请求、接收和实际停止，不能只靠排队消息声称停止。
+- **Technical invalidation.** Preserve the prefix and cost when clocks, logging, model identity, or the execution chain fail. Fix and rerun within applicable authorization.
+- **Safety stop.** Use the original hardware, workspace, or monitoring stop. Preserve the frozen thresholds.
+- **Policy failure.** Count valid timeouts, failures to release or hold, and other unmet task criteria.
+- **Scientific endpoint.** Archive at the planned sample, a falsified hypothesis, or a failed promotion criterion. Treat deployment as a separate action.
+- **User or priority change.** Stop admitting new work and let active episodes or pairs finish at a safe boundary. Record the request, acknowledgment, actual stop, and completed sample. Mark interrupted fixed-endpoint confirmation as incomplete.
 
-离线门、步前联锁、回合后检查、事后统计分别标时间。后验最大力未超门不等于全程实时力联锁；没进入某阶段不能称该阶段通过。
+Timestamp offline gates, pre-step interlocks, post-episode checks, and retrospective statistics separately. A recorded peak force and a real-time force interlock answer different questions. Report phase acceptance only for phases entered.
 
-报告完整成功数、失败环节、介入/停止、方向/条件分层、时间成本、差值区间。宽区间或无discordant不证明等效/非劣。中间转角改善不是成功定义。案例修复、独立收益、真机部署分开。
+Report task success counts, failure stages, interventions and stops, strata, time cost, and effect intervals. Wide intervals or zero discordant pairs give limited evidence about equivalence. Use the frozen task success definition. Separate case repairs, independent gains, and deployment.
 
 <a id="execution-verification"></a>
-## 执行核验与操作可靠性
+## Execution verification and reliability
 
-仿真和真机都可按故障类型选用以下检查。
+Use the checks relevant to the failure in simulation or on hardware.
 
-- **模型哈希绑错。** 以冻结计划中各臂预期的模型 SHA256 为准，核对 manifest 绑定和预检解析出的 checkpoint，再查 worker（含恢复入口）实际加载的文件。对实际文件算哈希，并用已有运行回执核实各臂身份。发现不一致时先定位是计划引用、加载路径还是恢复配置出了错，修复后重新核验绑定。
-- **原生初态精度丢失。** 从原始冻结初态或可信原生记录取值，保留原精度、单位和坐标约定。用实际运行入口的序列化、加载和原生初态校验检查往返值，已有回合再核对 reset 后、策略出动作前的状态记录。按事前声明的容差和配对规则比较两臂。只有舍入后的报告或 seed 时，将初态一致性记为待核实。
-- **父进程依赖缺失。** 查首个报错来自调度父进程还是 worker，记录实际解释器、工作目录、依赖版本和相关搜索路径。用真实父进程的启动环境做最小导入或依赖解析预检，覆盖它在派发前用到的模块和原生库。子进程导入成功只能证明子进程环境可用。预检选择无环境步进、无设备动作的入口。
+- **Wrong model hash binding.** Start with the expected SHA-256 for each arm in the frozen plan. Check manifest binding, the checkpoint resolved during preflight, and the file actually loaded by the worker, including resume paths. Hash the actual file and verify model identity from execution records. Trace mismatches to plan references, load paths, or resume config before rechecking the fix.
+- **Loss of native initial-state precision.** Use the frozen native state or a trusted native record and preserve precision, units, and frames. Check round-trip values through actual serialization, loading, and native validation. For existing episodes, inspect the post-reset state before the policy acts. Apply preset tolerances and pairing rules. Mark initial-state identity unverified if only a rounded summary or seed is available.
+- **Missing parent-process dependency.** Locate the first error in the scheduler parent or worker and record the interpreter, working directory, dependency versions, and search paths. Test the minimal imports and native libraries used before dispatch in the real parent launch environment. A successful worker import establishes only worker availability. Use a preflight with no simulator steps or device motion.
 
-执行异常按回合记录发生阶段、计划与实际值、证据引用、入场和计费状态。入场前拒绝单列为预检阻断。已入场且证据表明运行条件无效的，按预先声明的规则记技术无效，保留回执、另一臂已有结果和实际消耗。配对统计只纳入两臂均有效的配对。证据不足时标待核实。有效回合未达任务标准计策略失败，有效配对中基线成功而候选失败计退化。安全停止另记，按冻结的安全和结果规则处理。
+For execution anomalies, record stage, expected and actual values, evidence, admission, and cost. Log rejections before admission as preflight blocks. For admitted runs with verified invalid conditions, apply the prespecified technical invalidation rule. Preserve records, any completed counterpart, and actual cost. Include only valid pairs in paired statistics and flag unresolved cases. Count unmet criteria on valid runs as policy failures. A baseline success paired with a candidate failure is a regression. Record safety stops separately under the frozen rules.
 
-排队前确认没有同任务active worker，防重复；保留失败费用和续作业RNG/来源。资源统计域与准入域一致，不能把全机load和缩成两核后的阈值比较。
+Before queuing, check for an active worker on the same task. Preserve failure costs and RNG and provenance for resumed work. Match the resource measurement domain to the admission threshold.
 
-复用有效的冻结快照和重建证据；不因换报告名重算全历史。调度器在新配对/回合入场前读取协作停止请求，不一次性铺开无法中止的全部后续回合。监控按停止需求与回合耗时采样，不无变化地重复全量审计。
+Reuse valid frozen snapshots and reconstruction evidence. Check cooperative stop requests before admitting each pair or episode. Match monitoring to episode duration and stop needs.
 
-已有授权内的可逆bug可修复、离线验证后继续，不为每个hash变更重复确认。自动审批拒绝具体动作时不能改名、换路径或间接委托绕过；保留证据、完成不受影响工作、说明被拒操作/理由与需补充授权。封存不等于允许将原始数据/权重复制到任意目的地。
+Fix reversible bugs and verify them offline within existing authorization. If automatic review denies an action, preserve evidence, complete unaffected work, and report the denied action, reason, and missing authorization. Keep data and weight exports within the authorized destinations.

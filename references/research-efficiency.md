@@ -1,61 +1,61 @@
-# 研究效率与分级验证
+# Research efficiency and staged verification
 
-用于决定“下一项检查是否值得做”，不要求每个候选沿固定长管线推进。目标是尽快获得会改变下一步决策的证据。费用、可复现性和真实安全条件保留；通过选择检查范围减少消耗。
+Use this guide to decide which check is worth running next. Minimize the cost of evidence that can change the decision while preserving reproducibility, accounting, and applicable safety conditions.
 
-## 本轮只选一个主要问题
+## Choose one main question per round
 
-任务模式按用户目标选择：`feasibility`只交适配性/缺口/去留；`single_hypothesis`交一个主假说、必要对照、一个首选候选或NO_GO及保留结果；`full_research`才按证据扩展多假说和冻结确认。它们可分别包含下表的某个阶段，不需依次运行三个模式；新证据或用户目标变化才扩大工作。只读一致性检查用于已有结构化记录，不为填清单新增测试。
+Choose a task mode by the user's objective. `feasibility` reports fit, gaps, and whether to proceed. `single_hypothesis` tests one main hypothesis and delivers the necessary controls, one preferred candidate or a justified NO_GO, and retention results. `full_research` can expand to multiple hypotheses and frozen confirmation as evidence warrants. Any mode can use the relevant stages below. Apply read-only consistency checks to existing records.
 
-| 阶段 | 要回答的问题 | 合理的最小起点 | 何时结束/扩展 |
+| Stage | Question | Useful minimum | When to stop or expand |
 |---|---|---|---|
-| 离线探索 | 通路是否能产生预期计算变化？ | 一个代表窗口/帧和必要前缀、相关成功对照 | 预测被否定就换假说；作用明确才扩展 |
-| 候选筛查 | 是否值得投入更贵的验证？ | 针对故障的小开发集及精简保留面板 | 达事前晋级标准再扩大；不晋级即可交负/未决结果 |
-| 有限闭环探针 | 离线未知的物理响应是什么？ | 由人执行、有限方向/条件、有对照的新回合 | 更新机理或否定路线；属于探索，不当总体成功率 |
-| 正式独立确认 | 冻结候选的收益和代价有多大？ | 按目标效应、精度、风险和成本确定设计 | 用固定终点或事前有效的序贯规则；不事后挑有利停止点 |
+| Offline exploration | Can the path produce the predicted computational effect? | A representative window or frame, any required prefix, and a relevant success | Change the hypothesis if falsified. Expand when the effect is clear. |
+| Candidate screening | Is more expensive verification worthwhile? | A small failure-focused development set and compact retention panel | Advance if the preset criteria are met. Otherwise report a negative or inconclusive result. |
+| Bounded closed-loop probe | What physical response is missing from offline evidence? | Human-run new episodes with limited conditions and controls | Update or reject the hypothesis. Use the observations as development evidence. |
+| Formal independent confirmation | What are the frozen candidate's benefits and costs? | Design to the target effect, precision, risk, and cost | Use a fixed endpoint or a valid prespecified sequential rule. |
 
-没有通用强制的8/12/24/48例、完整26种子回归、全组合对照或必达显著性。少量样本回答不了总体收益时报告区间/未知；“结论不够强”可以是完成本轮的结论，不自动触发加样。大样本确认只有在其结果确实会影响采用/弃用/后续决策时才值得排到关键路径上。
+Choose sample sizes and controls for the question. If a small sample cannot estimate an overall effect, report the interval or uncertainty. Inconclusive evidence can complete a round. Put a larger confirmation on the critical path when the result can change adoption or the next decision.
 
-## 控制每批的边际价值
+## Limit the marginal cost of each batch
 
-在计划中简记：问题、预期可观察量、会改变的下一步、最便宜的适用检查、最大成本、复盘点、停止/晋级条件。第一批尽量产生可交付结果，避免先花整轮时间搭完所有工具。已授权范围内的常规阶段内调整按记录推进，不为每个变体重复询问用户。
+Record the question, predicted observation, decision it can change, cheapest applicable check, cost ceiling, review point, and stop or promotion criteria. Aim for a useful first result before building an entire toolchain. Within existing authorization, log routine adjustments and proceed.
 
-到复盘点时比较新增信息与后续成本：若只是让旧无明显收益候选的区间略窄，而新机制分析更有价值，提出或依用户指令执行转向。原来批次大不构成继续理由；额度上限也不是消费指标。新候选冻结前，不反复为每个小改动开启完整独立测试。
+At the review point, compare the value of new information with its cost. Shift to a more informative mechanism when more samples would only narrow the interval around an unpromising candidate. Treat budgets as ceilings. Freeze a candidate before opening a full independent test.
 
-探索允许根据已见结果停、换方向或重新设计，并保留全部试验/选择记录；这类数据是开发证据。正式确认不混入适应性调参；采用序贯设计时须在开始前定义规则并使用适用的推断方法，不能普通p值一显著就停。因用户优先级/技术/安全原因提前停止固定终点确认时，标注未完成，报告实际样本，不能当成原计划的完成结论或候选无效证明。
+Exploration can change direction or stop after seeing results. Preserve trials, selection decisions, and costs as development evidence. Use fixed candidates and criteria for formal confirmation. Sequential testing requires a prespecified design and matching inference. If a fixed-endpoint run stops for priority, technical, or safety reasons, mark it incomplete and report the sample actually obtained.
 
 <a id="screening-sample-selection"></a>
-## 筛查选样与停止
+## Screening samples and stopping
 
-- 先写清目标失败、与假说相关的首个可观测分岔，以及用哪些相关成功案例检查退化。有既有日志时，优先用已知失败原初态对应的日志和相近成功对照做离线诊断。已授权做闭环筛查且原初态可可靠恢复时，优先将原初态纳入基线和候选的配对比较。扰动近邻可能使基线成功，是否覆盖目标失败以实际基线结果和相关分岔为准。
-- 基线全成功时，这批只回答所测条件下的成功保留。若出现失败但首个相关分岔与假说不符，记录未覆盖的条件。只有下一批能补足覆盖并改变决策时，才在预算内换样或修订假说。覆盖足够但预测被否定或候选未达晋级标准时，结束该路线，保留结果和实际消耗。
-- 已知失败原初态、重复reset、同轨迹切片和为该case生成的邻域扰动沿用原物理case分组，用于开发或回归。独立确认预留未暴露的新初态，按完整episode、session及物理case与开发数据隔离。冻结候选和入组规则后执行，按预先声明的规则保留有效配对，基线成功和失败都入账。
+- Define the target failure, earliest relevant observable divergence, and successful cases for retention. Start with logs from known failing initial states and comparable successes. If a closed-loop screen is authorized and those initial states can be restored reliably, include them in paired baseline and candidate runs. Nearby perturbations can make the baseline succeed, so verify coverage from the observed baseline outcome and divergence.
+- If the baseline succeeds everywhere, the panel measures retention under the tested conditions. If observed failures diverge in a different way, record the coverage gap. Change examples or revise the hypothesis only when another bounded batch can resolve the gap and change a decision. When coverage is adequate and the prediction fails or the candidate misses promotion criteria, stop the route and retain results and costs.
+- Group known failing initial states, repeated resets, slices of one trajectory, and nearby perturbations generated for it under the original physical case. Use them for development or regression. Reserve unseen initial states for independent confirmation. Separate complete episodes, sessions, and physical cases across the split. Freeze the candidate and inclusion rules before running. Keep valid pairs with both baseline successes and failures.
 
-## 避免假保守与低效幅度搜索
+## Choose informative edit magnitudes
 
-修改幅度用可观察计算作用、接触前后的作用窗及有效约束定义，不用参数比例、改动数量或“越小越安全”作代理。先识别被舍入、非活跃gate、时间窗错位或clamp吞掉的修改；确认不是工具/表达问题后，直接选少量有功能意义的强度。不要在不可测的小范围内微增几十次，也不要机械向同一失败路线加大。
+Choose magnitude by observable computation, the effect window around contact, and actual constraints. Check whether rounding, inactive gates, timing, or clipping hides a change. Once the path is verified, try a few functionally distinct strengths. Increase strength when the effect should become observable within bounds. If side effects dominate, investigate selectivity or change paths.
 
-无反应但可合理增大且仍在范围内，可扩大同一批探索强度；副作用大则定位选择性/换通路。不因未证明完整物理机制就永远停在离线：当缺的是接触响应，交人执行有界探针通常比反复分析同一条日志更有信息。原安全联锁、模型来源、已知绝对约束和授权不能因“加速”取消。
+When the missing evidence is contact response, a bounded human-run probe can be more informative than repeatedly inspecting one log. Preserve the original interlocks, model provenance, hard constraints, and authorization.
 
-能力保留并非所有输出不变。报告原任务收益、原技能代价及不确定性，按事前声明的任务目标选择；对需要的纠正动作设置零差硬门会排除真正修复。无任务依据的全局极小动作差阈值、每个成功case都必须零退化、每个组件都必须保持原激活，都不作为默认要求。已知碰撞/力/设备限制与这种性能取舍分开。
+Measure retention by task benefit, loss of original capabilities, and uncertainty. Predetermine tolerances that allow the intended correction. Use global action differences, zero-regression criteria, or activation preservation only when justified by the task. Keep collision, force, and device limits separate.
 
-## 按需检查与证据复用
+## Reuse evidence and check only what changes
 
-- 静态无记忆网络可只做单步对照；涉及memory/滤波/阶段/动作块则在晋级前检查相关递推与退出。明确可用解析式的编辑可跳过临时hook和SVD。
-- 初筛用必要窗口和精简保留面板；相同base、runtime、输入、状态恢复、dtype和RNG下已有效的base输出/激活可缓存。缓存键含相关身份与模式，改变相应依赖才失效。循环窗口需有效pre-state或必要前缀，不能为省时跳过真实历史。
-- 新编辑会影响前缀/hidden时重算受影响部分；未编辑的base缓存仍可复用。保存重载、完整关键参数差分与较广保留检查集中在晋级候选，内部变体保留轻量差分和预算即可。
-- 已验证加载/保存路径未变时，不因换stage名重跑所有测试。只对新问题、新依赖、失败或失效证据重测。需要阳性对照时，优先最小合成/NO_OP检查；公开汽车或大语言模型复现是可选研究，不是机器人工作的前置手续。
-- 批量预约/记账可避免逐帧同步写入；记录实际数、失败/未知前缀和预约，不藏费用。被动解析/复用现有输出不算新前向，真正组件/模型前向仍计数。
-- 缺少完整日志时先做成立的局部/静态分析，清楚说明不可比较部分；不能用未来真值补齐，也不能因一个无关字段缺失阻塞所有分析。严格日志校验器用于相应完整契约验收，不作为任何工作的唯一入口。
-- 小任务直接用原生hook/矩阵代码，已有工具足够就不装新框架、不同时比较六个工具。独立轻量工作可在用户授权及资源许可内并行，锁、现场控制、确认数据和状态共享仍隔离。
+- A stateless policy may only need a single-step comparison. Before promoting a stateful edit, check relevant recurrence and residual state at exit. Skip hooks and SVD when an analytic construction answers the question.
+- Use the necessary windows and a small retention panel. Cache verified baseline outputs and activations by model, runtime, input, state reconstruction, dtype, RNG, and mode. Invalidate on a relevant change. Recurrent windows require an authentic prior state or prefix.
+- Recompute affected prefixes and hidden state after an edit. Reuse valid baseline caches. Save, reload, audit the full diff, and expand retention checks for promoted candidates. Keep lightweight diffs and accounting for exploratory variants.
+- Recheck load and save behavior when a dependency changes or evidence expires. Use a small synthetic or NO_OP check when a positive control is needed. Public car and language model reproductions are optional research.
+- Batch reservation and accounting when useful. Record actual use, failed attempts, incomplete prefixes, and reservations. Count real model and component forwards. Keep parsing and reuse of existing outputs separate.
+- Continue valid local or static analysis when logs are incomplete. State what remains incomparable. Keep future ground truth outside the policy. Use strict log validation where the full contract applies.
+- Prefer native hooks or matrix operations for small tasks. Reuse available tools. Run independent lightweight work in parallel only within authorized resources. Isolate locks, hardware control, confirmation data, and mutable state.
 
-## 可响应的执行与停止
+## Responsive execution and stopping
 
-人负责真机采集/确认，agent离线工作。采集程序及任何仿真调度器应提供已核验的`stop_after_current_episode`或`stop_after_current_pair`等协作入口；在下一回合/配对入场前读取停止请求，保留当前完整结果及未执行表。运行顺序和pair边界明示，不能靠杀正在运动的worker实现科学提前停止。
+Humans handle hardware collection and confirmation by default. Verify a cooperative stop entry point such as `stop_after_current_episode` or `stop_after_current_pair` in collectors and simulation schedulers. Check it before starting the next episode or pair. Preserve completed work and list runs that never started. Make run order and pairing boundaries explicit. Leave motion stops to the verified safe mechanism.
 
-长任务按可复盘批次提交，避免所有后续实验已自动串联且无法更改。监控频率按回合耗时和停止需求设置；状态未变时不反复做全量审计或发催促。等待时可做与运行冻结无关的离线开发/阅读，不热改正在执行的policy/评价/物理，也不抢占他人资源。
+Submit long work in reviewable batches. Match monitoring frequency to episode duration and stop requirements. During a frozen run, keep unrelated offline work separate and preserve the executing policy, evaluator, physics, and resource allocations.
 
-用户明确改变优先级时立即确认实际入场边界，再发一次停止/转向并验证已被执行。消息发送成功不等于active agent已接收；若只能排队且缺少安全中断接口，应明确报告状态和具体人工操作，不能声称已经停止，也不能因此重复派实验或绕过受管接口。
+When the user changes priorities, identify the actual admission boundary and verify that the stop or redirect has taken effect. If a request is queued and there is no safe interruption interface, state the active status and the actual manual stop operation.
 
-## 一轮可用的简短交付
+## Deliver a useful result from one round
 
-说明已回答什么、用哪些数据/模式、观察到什么、最大未决问题、实际成本及下一步。记录省略检查与理由；可用缓存报告的路径/hash引用，不重复生成大份历史。允许交付“不值得继续此候选，转向另一通路”或“证据不足但已完成有限探索”，不要求每轮必产晋级模型、统计显著收益或新真机采集。
+Report the question answered, data and modes used, findings, largest unresolved issue, actual cost, and next decision. Record omitted checks and why. Reference valid cached evidence by path and hash. A justified NO_GO or bounded exploration with insufficient evidence is a valid result.

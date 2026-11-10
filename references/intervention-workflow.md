@@ -1,76 +1,74 @@
-# 机制定位 → 内部干预 → 权重编译 → 能力保留
+# Trace the mechanism, intervene, fold the edit, and check retention
 
-用于显式系数编辑不足以回答问题、需要检查MLP/循环记忆/共享通路，或临时干预有效但还没有永久候选的情况。不是每个任务都必须跑全套。内部干预只能提供计算因果证据，不自动说明接触后的物理机制。
+Use these modules when a direct coefficient edit is insufficient, when the task requires tracing MLPs, recurrence, or shared paths, or when a temporary intervention works and needs to be saved as weights. Internal interventions can establish computational causality under tested conditions. Physical contact mechanisms need their own evidence.
 
-以下是可选模块，不是固定顺序的七重验收。先按[研究效率](research-efficiency.md)确定本轮问题与最低证据：解析作用明确时可直接构造内存权重变体；不强制先找激活方向、完成双向替换或证明完整物理机制。
+Choose the least costly module that answers the question. An analytically understood change can go straight to an in-memory variant. Activation directions, bidirectional replacement, and a complete physical explanation are optional where they add no decision-relevant evidence. [Research efficiency](research-efficiency.md)
 
-## 1. 冻结可检验问题
+## 1. Freeze a testable question
 
-在 `assets/experiment.template.json` 写明tensor/module位置、输入轴与单位、状态来源、预期中间量、首个预计改变时刻、符号/幅度或时间窗预测、否定条件、替代解释及外部帮助。把“理解”落实为可检查的前向预测，不仅是自然语言命名。
+Use `assets/experiment.template.json` to identify tensor or module location, input axes and units, state provenance, expected intermediate quantity, first expected change, predicted sign, magnitude or time window, falsifier, alternative explanations, and any external help. Express the interpretation as a forward-pass prediction that can be checked.
 
-采用成功/失败激活对比时，核验相关base重建后，从开发集选适配条件接近的窗口；按episode/session分组，匹配与假说相关的任务阶段、物体估计、关节/速度、夹爪/接触可观测条件与历史语义。先固定匹配规则，报告重叠与不匹配部分。没有足够重叠时不能靠对齐最终时间或把不同pose硬配成相同状态；可改做同状态局部干预或解析分析，不要求先采全套匹配数据才允许探索。成功/失败结局标签只用于诊断分组，不能混入policy输入或当作正确动作标签。
+For success and failure activation contrasts, verify relevant baseline reconstruction and choose comparable development windows. Group by episode and session. Match relevant task phase, object estimate, joints and velocities, gripper or observed contact, and history semantics. Fix matching rules before examining the contrast and report overlap and unmatched cases. With poor overlap, use a same-state intervention or analytic analysis. Keep outcome labels in diagnostic grouping. Use verified action references when correct action labels are required.
 
-## 2. 找首个计算分岔
+## 2. Find the first computational divergence
 
-只采样假说相关module的输入、输出、门值、hidden/积分、先验与反馈分量、解码与限幅前后量。记录坐标、shape、调用次数和hook位置；GRU重复调用需精确到episode/tick/layer及pre/post时点。先查源/初始化/感知/动作接口，再判断是否存在网络瓶颈。
+Sample only inputs, outputs, gates, hidden state, integrators, prior and feedback terms, and pre- and post-decoding or clipping quantities relevant to the hypothesis. Record coordinates, shapes, call counts, and hook locations. For a repeatedly invoked GRU, identify the episode, tick, layer, and pre- or post-call position. Verify sources, initialization, perception, and action interfaces before attributing a bottleneck to the network.
 
-均值差、SVD/PCA、方差/协方差、饱和比例及单元输出贡献是定位工具，不是因果结论。长episode不能因帧多而主导所有统计；声明按episode加权或抽样方式。控制物体位置、阶段等混杂；不能把“发生在失败中”的方向直接命名为“失败神经元”。
+Use mean differences, SVD or PCA, covariance, saturation rates, and unit contributions to locate paths. Check causality separately. State the weighting or sampling rule so long episodes do not dominate by frame count alone. Control for phase, object location, and similar confounders.
 
-## 3. 静态内部干预
+## 3. Intervene at a fixed state
 
-选用内部干预时，从同一pre-state与RNG比较base、干预版；按需要加sham及下列对照，不跑机械全组合：
+Match prior state and random inputs between the baseline and the intervention. Select controls that distinguish the hypothesis.
 
-- 可对失败窗口替换为匹配成功窗口的选定激活，必要时反向替换成功窗口；不替换其它观测或动作历史。
-- 对候选组件做零化、均值替换、方向减法或隔离；按假说选必要的正负、强度、同范数随机方向、其它组件或时窗对照。
-- 局部步固定状态；涉及状态效应且值得晋级时，再检查相关序列递推与退出残留。匹配成功激活对当前输入可能不可达，须标注这种分布外注入。
+- Replace selected activations in a failure window with those from a matched success. When useful, make the reverse replacement too. Preserve unrelated observations and action history.
+- Zero a component, replace it with a mean, subtract a direction, or isolate the path. Choose sign, magnitude, equal-norm random direction, component, or time-window controls as warranted.
+- Keep state fixed for local steps. Before promotion, check relevant sequence dynamics and residual state when the edit can affect them. Label injections whose activations may be unreachable for the current input.
 
-对照是否改变预先指定中间量、最早影响位置、作用窗及成功日志计算，不使用旧轨迹结果计算“候选成功率”。必要/充分只能在所测计算和干预条件下描述；双向替换或消融失败不必然否定所有冗余通路。hook关闭后应恢复原输出且不留缓存/参数/buffer变化。
+Check the specified intermediate quantity, earliest divergence, effect window, and computation on original successes. Attribute logged outcomes to the behavior policy. Scope necessity and sufficiency to the tested intervention and computation. Redundant paths may survive a failed ablation or replacement. After removing a hook, verify that outputs return to baseline and that caches, parameters, and buffers retain their original state.
 
-## 4. 方向写入与选择性权重编辑
+## 4. Write a direction into selected weights
 
-采用列向量约定：线性层 `y=W h+b`，W的行是输出、列是输入。使用框架相反布局时显式转置。单位输出方向u须满足 `uᵀu=1`；对选定写入列J可构造：
+In column-vector convention, a linear layer is `y = W h + b` with outputs in rows and inputs in columns. Transpose explicitly when the framework uses the opposite layout. For a unit output direction `u` with `uᵀu = 1`, edit selected input columns `J` with
 
-`W[:,J] ← W[:,J] − α u (uᵀ W[:,J])`。
+`W[:, J] ← W[:, J] − α u (uᵀ W[:, J])`.
 
-这是减少选定单元写入方向的干预，不保证网络里其它路径、bias或后继非线性中的该信息被消除。J、方向、α、层数及归一化均由开发证据决定并记录选择次数；不能照抄语言模型的层号或神经元数。
+This reduces the contribution of those columns along `u`. Other paths, biases, and downstream nonlinearities can still carry related information. Choose columns, direction, strength, layers, and normalization from development evidence. Record selection attempts and derive model-specific indices.
 
-LEACE等统计方向也需同样的混杂/保留检查。统计估计属于 `statistical_intervention`；不是仅凭权重读出了概念，也不意味着线性不可读就对非线性下游无影响或可保证物理收益。
+Use the same confounding and retention checks for statistical directions such as LEACE. Label the estimate `statistical_intervention`. Check nonlinear downstream effects and physical outcomes separately.
 
-## 5. 将临时干预写入原权重
+## 5. Fold the intervention into the original weights
 
-固定仿射变换 `z′=P z+c` 有两种可解析情况：
+A fixed affine transformation `z′ = P z + c` can be folded into an adjacent linear layer in either of these cases.
 
-| 干预位置 | 等价权重（原W、b均取修改前值） |
+| Intervention location | Equivalent parameters using the original `W` and `b` |
 |---|---|
-| 当前线性层输入h | `W′=W P`, `b′=b+W c` |
-| 当前线性层输出y | `W′=P W`, `b′=P b+c` |
+| Linear layer input `h` | `W′ = W P` and `b′ = b + W c` |
+| Linear layer output `y` | `W′ = P W` and `b′ = P b + c` |
 
-bias不存在而变换需要非零bias时，不能偷偷新增参数。不能穿过ReLU、tanh、LayerNorm、clamp、输入依赖gate或量化随意折叠。共享激活有多个消费者时，折叠一个消费者只等价于该分支干预。随状态/时间变化的P或c通常不是一个固定权重更新；应研究原网络的表达能力，表达不了就交架构限制或另列扩展实验。
+If a bias is required but absent, record the architectural limitation or report adding a bias as a separate change. Fold only across compatible affine operations. ReLU, tanh, LayerNorm, clipping, input-dependent gates, and quantization generally require separate treatment. For a shared activation, folding into one consumer affects that branch. State- or time-dependent `P` or `c` may exceed what a fixed edit in the original architecture can express. Report that limit or test an extension separately.
 
-`scripts/affine_patch.py` 只处理上述单层固定实数变换。输入/输出格式与命令见 [工具流程](open-source-tools.md#affine-helper)。它不推断正确方向、不拟合标签、不处理GRU门控或完整checkpoint。初筛可用开发特征和内存变体验证数值等价并计数；晋级候选再于实际runtime/dtype下去hook、写回、保存重载，复查相关模式。只有重载候选本身有效，才能称交付权重实现了该计算干预。相同导出路径已有效的技术证据可引用，不为每个小变体重跑全链路。
+The helper handles these fixed, real-valued, single-layer transforms. Direction discovery, label fitting, GRU gates, and full checkpoints remain outside its scope. Screen numerical equivalence on development features or in-memory variants. For promoted candidates, remove hooks, write the weights, save and reload in the actual runtime and dtype, and check relevant modes. Reuse valid export-path evidence across variants. [Affine folding helper](open-source-tools.md#affine-helper)
 
-## 6. 冻结成功能力保留面板
+## 6. Freeze a retention panel
 
-每批筛查前固定与决策相称的精简面板、尺度、容差与晋级/停止规则；再对晋级候选扩大面板，不默认每个变体全量回归：
+Before screening, choose a small panel, scales, tolerances, and promotion or stopping rules appropriate to the decision. Expand it only when a candidate advances.
 
-- 原成功episode，含作用窗前、窗内、退出后和任务后段；每项说明状态覆盖。
-- 与假说无关的阶段/任务头/控制模式（若共享同一网络），必要的动作边界和饱和区域。
-- 本轮所选案例的最大及分位动作差、关节/夹爪分项、时序、适用的hidden残留、非有限值；物理量按各自单位报告，不把rad和m无说明合成L2。
-- 诊断目标的改善与保留面板的代价同时报告。局部微小差或平均无变化不自动合格；不看结果后放宽最差窗口阈值。
+- Include previously successful episodes with coverage before, during, and after the intervention window and later in the task.
+- Include relevant untargeted phases, heads, or control modes, and action boundaries or saturation regions.
+- Report maximum and quantile action changes, joints and grippers separately, timing, applicable residual hidden state, and nonfinite values. Keep physical units explicit.
+- Report target gains alongside retention costs. Set tolerances for the worst windows before inspecting candidate results.
 
-方向/协方差只从开发集估计。回归面板若参与调参就已暴露，不能再当盲测；另保留按session/case隔离的离线确认及人执行的新闭环确认。数据不够就报告覆盖缺口，不能用随机拆帧制造独立集。
+Estimate directions and covariances on development data. A tuning panel becomes exposed and can serve regression checks. Reserve separate confirmation by session and case, and use new human-run hardware interactions where required. Report coverage gaps when there are too few independent groups.
 
-保留面板衡量代价而非要求所有输出零变化。明确允许改变的通路/时间窗和可接受性能取舍，相关代价随收益一起报告；安全约束另列。探索无需为取得总体显著性而不断扩面板，正式收益声明才需要与该声明相称的独立确认。
+Measure allowable trade-offs by task. Specify which paths and time windows may change, how much degradation is acceptable, and any separate safety constraints. Scale independent confirmation to the intended claim.
 
-## 7. 阳性、阴性对照与验收层次
+## 7. Choose positive and negative controls
 
-首次搭工具链或替换关键加载/编辑环节时，可先验证：
+When setting up tools or changing a critical loader or edit step, choose the least costly applicable check and reuse valid evidence.
 
-以下为不同目的的可选验收，不要求依次全部完成；选择能排除当前技术风险的最低成本对照，复用未失效证据。
+1. **Known synthetic intervention.** `scripts/test_affine_patch.py` compares a temporary transform with written weights in a deterministic small network and checks bias, transpose, and rounding cases. The result covers the local algebra helper.
+2. **Apply a published patch.** Bind the author's baseline, patch revision, and dtype and verify hashes. Budget any simulation replay separately from hardware. Use the rounded model specified for the car patch. [Car artifact manifest](https://github.com/RikiyaT/lm_understand-logs/blob/main/exp4_fix_car/README.md) · [Math patch protocol](https://github.com/RikiyaT/lm_understand-logs/blob/main/exp8_math/README.md)
+3. **Discover an unknown repair.** Give the agent an independent task without the patch or hints. Record help and total attempts separately from known patch application.
+4. **Validate the user's policy.** Freeze the candidate and have a human run new hardware episodes from a separate plan when physical verification is required.
 
-1. **合成已知干预**：`scripts/test_affine_patch.py` 对确定性小网络比较临时变换与写回权重、测试bias/转置/舍入拒绝等；只验证局部代数工具。
-2. **公开补丁应用**：选作者发布的base/patch/revision与dtype，用官方脚本核hash；若做闭环复算另列有限仿真预算，不能触碰真机。对照[原汽车文件清单](https://github.com/RikiyaT/lm_understand-logs/blob/main/exp4_fix_car/README.md)或[数学补丁协议](https://github.com/RikiyaT/lm_understand-logs/blob/main/exp8_math/README.md)。汽车补丁基于作者展示的舍入网络，不能误施于全精度训练权重后称复现失败。
-3. **未知修复发现**：agent没看过参考补丁、未获暗示的独立任务；记帮助与总尝试，和已知补丁应用分开。
-4. **自身policy验证**：冻结候选后由人按采集单执行新回合；与以上验收完全分开。
-
-NO_OP、hook关闭恢复、参数保存重载及适用的负方向等阴性/技术对照用于排除工具错误；不要求每一轮全做。已知答案在对照中可以用，但不能据此宣称agent自主发现；任一合成/公开实验成功都不证明真机可用。
+Use NO_OP, hook removal, save and reload, or a reverse direction as appropriate to isolate technical errors. Attribute prior answers or supplied directions explicitly. Synthetic and published checks establish their own scoped evidence.

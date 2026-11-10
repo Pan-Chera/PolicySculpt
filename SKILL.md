@@ -1,32 +1,32 @@
 ---
 name: robot-weight-programming
-description: 解释神经 policy 的计算通路，以无梯度 Weight-Space Programming 直接编辑学习权重并筛查候选。适用于机器人控制、离散决策、序列生成和工具选择等策略。按需接入任务数据、推理适配器和独立评估，分别报告计算效应、任务表现与交互收益。
+description: Trace how a neural policy computes its outputs, directly edit learned weights without gradients using Weight-Space Programming, and screen the resulting candidates. Use for robot control, discrete decisions, sequence generation, and tool selection. Connect task data, native inference adapters, and independent evaluation as needed. Report computational effects, task performance, and interaction outcomes separately.
 ---
 
-# 策略权重编程（WSP）
+# Policy Weight-Space Programming (WSP)
 
-WSP 核心从冻结的 base 和可检验的计算假说出发，在隔离副本上直接编辑学习权重，比较 base 与候选，再保存、重载并检查实际参数差分。核心可在没有环境或历史轨迹时做结构分析，也可用固定输入、日志或独立测试验证。按当前问题选最短的证据路径，在有限预算内探索或筛查，只有值得推进的候选才做独立确认。
+Start from a frozen baseline and a testable computational hypothesis. Edit learned weights directly in an isolated copy, compare it with the baseline, then save, reload, and audit the actual parameter changes. You can analyze the policy structure without an environment or historical trajectories, or validate with fixed inputs, logs, or an independent evaluator. Choose the shortest path that answers the current question. Screen within a bounded budget and advance only promising candidates to independent confirmation.
 
-## 按任务选择接口
+## Choose interfaces for the task
 
-- **策略适配器**负责加载、保存、输入编码和输出解码。按实际接口提供单步计算，或提供 `reset`、必要状态快照和递推。明确状态、历史和随机输入语义，base 与候选各用隔离实例。未知前置状态时，可从必要前缀重建或收窄比较范围。重建、共享权重、缓存、随机性和保存重载按 [适配器验收](references/adapter-and-integrity.md) 检查。
-- **数据与评估**由任务决定。静态测试可用离散决策样例、冻结提示或工具调用用例。带状态的策略可用固定输入序列，也可按需连接独立的交互评估器。分开记录输入、任务标签、输出及真实交互结果。离线核心只接收策略与输入，评估器负责环境、成功标准、干预、计费和回执。
-- **机器人、具身仿真和真机**按需读 [机器人策略工作流程](references/robot-workflow.md)。控制周期、动作单位、初态、仿真 reset、机器人日志契约、真机安全和执行授权在该任务适配中处理。真机采集与确认默认由人执行。机器人模板、`validate_bundle.py` 和 `check_experiment.py` 面向既有机器人记录，普通离线策略任务可按下文最小记录交付。
+- **Policy adapter.** Load and save native checkpoints, encode inputs, and decode outputs. Provide a single-step operation or, when relevant, `reset`, state snapshots, and state updates. Document the meaning of state, history, and random inputs. Isolate the baseline and candidate instances. Rebuild unknown prior state from the necessary prefix or narrow the comparison. Check reconstruction, weight sharing, caches, randomness, and reload behavior using the [adapter and integrity guide](references/adapter-and-integrity.md).
+- **Data and evaluation.** Choose inputs and metrics appropriate to the task. Static evaluation may use decision examples, frozen prompts, or tool-call cases. For stateful policies, use fixed input sequences or connect a separate interactive evaluator. Record inputs, labels, outputs, and observed interaction outcomes separately. The offline workflow takes policies and inputs. The evaluator owns the environment, success criteria, interventions, resource accounting, and execution records.
+- **Robots, embodied simulation, and hardware.** Read the [robot policy workflow](references/robot-workflow.md) when relevant. The task adapter handles control periods, action units, initial states, simulator resets, robot logs, hardware safety, and execution authorization. Human operators handle hardware collection and confirmation by default. The robot templates, `validate_bundle.py`, and `check_experiment.py` serve existing robot records. Ordinary offline policy tasks can use the minimal reporting requirements below.
 
-### 首次接入
+### First-time setup
 
-- **按要验证的结果选路径。** 只看固定输入下的输出或动作变化时，做离线配对。要看动作改变后续状态和最终结果时，让原策略和候选从可比初态各自递推，接入任务原有评估器。结论涉及接触、碰撞或整局物理表现时，按需读机器人工作流程并使用已有且获授权的仿真入口。只有日志时先做离线诊断。非具身任务只接入自身所需的数据和评估。
-- **用最小输入复现原策略。** 从原权重、原生推理入口、代表性输入或日志、目标改善和需保留的行为开始。先用一个代表用例，把适配器输出与原生推理或可信日志对齐，按需核对编码、前置状态和随机输入。缺少可核对输出时记录证据范围。需要验证闭环收益时，再补环境入口、初态或重置方式和成功判据。
+- **Choose the evaluation by the claim.** Use an offline paired comparison for output or action changes on fixed inputs. To measure how actions change later states and final outcomes, run each policy separately from comparable initial conditions with the task's existing evaluator. For claims about physical interaction, contact, or collisions, consult the robot workflow and use an available, authorized simulator. Start with offline diagnosis when only logs are available. For non-embodied tasks, use the task's own data and evaluator.
+- **Reproduce the baseline with the smallest useful input.** Start with the original weights, native inference entry point, representative inputs or logs, the behavior to improve, and the behavior to retain. Compare one representative adapter output with native inference or a trusted log. Check encoding, prior state, and random inputs as applicable. If reference outputs are unavailable, record what the evidence covers. For a closed-loop claim, also obtain the environment entry point, initial conditions or reset procedure, and success criteria.
 
-## 从计算假说到可验证候选
+## From hypothesis to a testable candidate
 
-1. **固定任务与 base。** 记下 checkpoint、SHA256、runtime、编码/归一化、当前证据范围和预算。先区分输入或加载错误、观测不足、可编辑计算缺陷与能力缺口。按 [研究效率](references/research-efficiency.md) 选可行性审查、单假说修复或完整研究，并声明本轮停止依据。
-2. **说明哪里、何时、会改变什么。** 给出必要的参数功能图、首个预计分岔、可检验预测和否定条件。按问题选解析编辑、激活替换、方向投影或跨层路由。可直接预测参数作用时，可从确定性编辑开始。参见 [机制干预与能力保留](references/intervention-workflow.md) 和 [可选工具](references/open-source-tools.md)。
-3. **隔离构造并核查差分。** 按机制选择能产生可测效应的幅度和范围，可直接编辑整块或多个层。初筛只核对目标张量、相关共享项和代表输入，复用依赖未变的 base 结果。晋级时做完整差分，核对 dtype/shape、别名、buffer、包装和受影响的缓存，去 hook、保存重载并确认实际效应。区分 `analytic_wsp`、`statistical_intervention`、`constraint_repair` 与需相应授权的数据拟合或梯度训练。
-4. **比较并决定是否推进。** 单步比较固定输入和必要的相同前置状态。固定序列比较各策略自己的递推状态。随机策略用可核验的共同随机输入，或报告独立采样分布。选少量相关失败用例和成功保留用例，记录覆盖、容差、对照与退化。若基线全成功或实际失败机制不匹配，记录修复覆盖缺口，换有区分力的用例或停止。新确认数据按原始用例和会话分组隔离，冻结候选与判据后再评估。
+1. **Freeze the task and baseline.** Record the checkpoint, SHA-256, runtime, encoding and normalization, evidence scope, and budget. Distinguish input and loading errors, missing observations, editable computational defects, and missing capabilities. Use the [research efficiency guide](references/research-efficiency.md) to choose a feasibility assessment, a single-hypothesis repair, or full research, and define a stopping rule.
+2. **Explain what should change and when.** Map the relevant parameters to their computation, identify the earliest expected divergence, and state a testable prediction and what would disprove it. Choose an analytic edit, activation replacement, directional projection, or cross-layer routing as appropriate. Start with a deterministic edit when its effect can be predicted directly. See [intervention and capability retention](references/intervention-workflow.md) and [optional tools](references/open-source-tools.md).
+3. **Build an isolated candidate and inspect the diff.** Select a scope and magnitude that produce a measurable effect. Edit whole blocks or multiple layers when warranted. During initial screening, check only the target tensors, relevant sharing, and representative inputs. Reuse baseline results when their dependencies are unchanged. Before advancing, audit the full diff, including dtype, shape, aliases, buffers, wrappers, and affected caches. Remove hooks, save and reload, and check the effect again. Distinguish `analytic_wsp`, `statistical_intervention`, and `constraint_repair` from data fitting or gradient training, which requires separate authorization.
+4. **Compare and decide whether to advance.** For single-step checks, match inputs and any required prior state. For fixed sequences, let each policy evolve its own internal state. For stochastic policies, share verified random inputs or report separate sampled distributions. Screen representative failures and original successes. Record coverage, tolerances, controls, and regressions. If baseline failures are absent or the observed mechanism differs, record the coverage gap and change the examples or stop. Group confirmation data by original case and session, keep those groups separate, and freeze the candidate and criteria before evaluation.
 
-## 交付与证据边界
+## Deliverables and evidence boundaries
 
-交付 base 与候选身份、编辑程序或实际差分、假说与反证、比较模式、输入和分组、影响范围、保留结果、覆盖缺口、实际调用和停止依据。重复验证前写明哪个依赖变了或哪项决策需要新证据。审计前向和耗时单列，避免与实际交互混计。分别声明参数计算作用、固定输入上的效应、独立任务样本表现，以及实际交互中观察到的收益。旧轨迹上的后续状态、奖励和成功属于采集时的策略。
+Report baseline and candidate identities, the edit program or actual diff, the hypothesis and counterevidence, the comparison mode, inputs and groups, the affected scope, retained behavior, coverage gaps, actual calls, and the stopping rule. Before repeating a check, identify the changed dependency or the decision that requires new evidence. Count audit forwards and their time separately from interactions. Distinguish changes to the computation, effects on fixed inputs, independent task results, and observed interactive gains. Later states, rewards, and success in old logs belong to the behavior policy that generated them.
 
-随附的 [仿射折叠工具](references/open-source-tools.md#affine-helper) 可在 NumPy 中编辑和核验单个线性层。策略的原生加载、序列化和推理留在各自适配器。服务器 RSI 仓库的 `research/real_rsi_v1_posttrain_native_20261109/wsp_core.py` 可独立编辑和核查普通 PyTorch 参数，FK9 加载、环境和评估回执留在 RSI 适配层。历史实践与证据范围见 [方法来源与实践教训](references/method-and-lessons.md)。
+The bundled [affine folding helper](references/open-source-tools.md#affine-helper) edits and checks a single linear layer in NumPy. Native loading, serialization, and inference belong in each policy adapter. In the original RSI repository, `research/real_rsi_v1_posttrain_native_20261109/wsp_core.py` provides standalone PyTorch parameter editing and auditing. FK9 loading, the environment, and evaluation records are handled by the RSI adapter. See [method provenance and practical lessons](references/method-and-lessons.md) for historical evidence and scope.

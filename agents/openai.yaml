@@ -1,4 +1,4 @@
 interface:
-  display_name: "策略权重编程（WSP）"
-  short_description: "对神经策略定位机制、直接编辑学习权重，并分开验证离线效果和任务表现"
-  default_prompt: "使用 $robot-weight-programming 定位策略计算机制，离线编辑权重并检查能力保留，按任务接入独立评估。"
+  display_name: "Policy Weight-Space Programming (WSP)"
+  short_description: "Trace, edit, and evaluate neural policy weights"
+  default_prompt: "Use $robot-weight-programming to trace the policy computation, edit weights offline, and check retained behavior. Connect independent evaluation as needed for the task."

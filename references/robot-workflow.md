@@ -1,116 +1,112 @@
-# 机器人策略的 WSP 工作流程
+# WSP workflow for robot policies
 
-默认先做**有限离线探索/筛查**；有值得推进的候选和明确验证问题时，再冻结候选并安排独立闭环确认。日志准入、机制诊断、编辑、筛查是可迭代模块，不是每次必须串行跑满的七道关。物理初态无法逐位恢复，不妨碍离线工作。支持现有MLP、循环、分层、动作块等policy；先查真实接口，不强套阶段结构或某种机器人。
+Start with bounded offline exploration and screening. Freeze a candidate and arrange independent closed-loop confirmation when there is a promising edit and a clear verification question. Log acceptance, diagnosis, editing, and screening can be revisited as evidence changes. Continue valid offline work when exact physical resets are unavailable. Support MLPs, recurrent, hierarchical, and action-chunk policies through their actual interfaces.
 
-真机默认由人操作采集与闭环确认。日志不足时，agent先根据当前假说与真实SDK/推理接口交付采集程序、配置、有限采集计划和操作说明，完成无硬件测试；由人执行并返回日志，agent再做准入与离线分析。除非用户明确另行安排，不把数据缺失转成agent自行启动机器人。采集程序是否发送运动指令须明确，人工启动也不豁免原安全系统。
+Humans collect data and run hardware confirmation by default. When logs are incomplete, define the gap and prepare a collector, configuration, bounded plan, and operator instructions. Test it without hardware. The operator runs it and returns logs for offline analysis. State whether the program can send motion commands. Preserve the original safety system.
 
-使用用户已有资产与授权。不因调用skill扩大预算、复制权限或启动真机运动。已授权的可逆编辑和离线检查直接推进；已有明确实验授权不重复索要。候选构造、硬件执行和部署是不同操作，不能互相冒充授权。本skill不默认启动训练或真机。
+Work within the user's assets, budget, and authorization. Proceed with authorized reversible edits and offline checks. Treat candidate construction, hardware execution, and deployment as distinct actions with their own scope.
 
-## 按任务读取参考
+## Read references as needed
 
-- 开始分配验证工作、工作变慢或考虑扩大样本时：读 [研究效率与分级验证](research-efficiency.md)。
-- 首次用于某个policy：读 [日志契约与分析模式](data-contract.md)。
-- 要确定适配器能支持哪些结论，或涉及共享权重、缓存、随机性：读 [适配器验收与编辑完整性](adapter-and-integrity.md)。
-- 真机数据不足或准备交给人执行采集：读 [人工执行的数据采集](human-collection.md)。
-- 要选择张量、构造修复或解释负结果：读 [机制与编辑](mechanisms.md)。
-- 要定位深层/循环通路或把干预写回权重：读 [机制干预与能力保留](intervention-workflow.md)。
-- 要复用weightspace、pyvene、LEACE、APRNN或采集工具：读 [开源工具使用流程](open-source-tools.md)，只取当前需要的工具。
-- 要从离线候选推进到少量真机确认：读 [真机验证](real-robot-validation.md)。遇到仿真或真机执行异常时，按需读 [执行核验](real-robot-validation.md#execution-verification)。
-- 要比较原研究、讨论方法是否契合：读 [方法来源与实践教训](method-and-lessons.md)。
+- For verification scope, slow progress, or larger samples, read [Research efficiency](research-efficiency.md).
+- For a new policy, read [Log contract and analysis modes](data-contract.md).
+- For adapter claims, shared parameters, caches, or randomness, read [Adapter acceptance and edit integrity](adapter-and-integrity.md).
+- For new hardware logs, read [Human-run collection](human-collection.md).
+- For tensor selection, repair design, or negative results, read [Mechanisms and edits](mechanisms.md).
+- For deep or recurrent paths and permanent edits, read [Interventions and retention](intervention-workflow.md).
+- For optional editing and collection tools, read [Tool integration](open-source-tools.md).
+- For hardware confirmation or execution anomalies, read [Hardware confirmation](real-robot-validation.md) and [Execution verification](real-robot-validation.md#execution-verification).
+- For historical methods and evidence, read [Method provenance](method-and-lessons.md).
 
-## 工作流程
+## Workflow
 
-下文 `scripts/` 和 `assets/` 路径相对于技能根目录。
+Paths under `scripts/` and `assets/` are relative to the skill root.
 
-### 先选阶段与最短证据路径
+### Choose the stage and shortest evidence path
 
-先做入口分流：输入/归一化/加载/接口错误走实现修复并单列；必要状态不可观测时补数据/感知，暂停依赖它的假说，继续成立的其它分析；可定位计算缺陷走编辑；证据不足走最小补充检查；若必要能力无可表达通路且有依据，建议训练/架构扩展而不自行启动。不因一次失败就断言缺能力，也不为完成任务强找“故障神经元”。
+Separate input, normalization, loading, and interface errors from weight edits. When essential state is unobservable, improve sensing or collect data for that hypothesis and continue unaffected work. For a localized computational defect, test a direct edit. When evidence is limited, use the smallest check that can distinguish plausible causes. If evidence supports an expressivity gap, report it and scope any training or architecture extension separately.
 
-任务模式选一项：**可行性审查**交适配性、缺口和去留建议；**单假说修复**交一个假说、必要对照、一个首选候选或有据NO_GO及保留结果；**完整研究**按新证据扩展多假说比较与冻结确认。任务模式不等于阶段，不要求每次逐项晋级；前两种模式不默认扩大成完整研究。
+Choose feasibility, single-hypothesis repair, or full research. Feasibility describes fit, gaps, and whether to proceed. A repair tests one hypothesis with the necessary controls and delivers a preferred candidate or justified NO_GO and retention results. Full research can expand to competing hypotheses and frozen confirmation. Start a requested repair directly when the entry checks support it.
 
-按用户目标选模式；用户请求修复时通常直接做单假说修复，不先另开一轮可行性研究。入口分流是简短判断，不是独立审批或要求完整证明的阶段。
+State whether the round is exploration, screening, a bounded closed-loop probe, or formal confirmation. Record the decision it can change, cost ceiling, review point, and stop condition. Begin with representative windows. Expand retention and independent confirmation when justified. Stop an unpromising route and retain its evidence.
 
-写清本轮是探索、筛查、有限闭环探针还是正式确认，以及哪项结果会改变下一步。阶段设上限和复盘点，上限不是必须花完的额度。能由少量代表窗口回答的问题，先在这些窗口验证；只有晋级候选才扩展保留面板及独立确认。没有机制进展或候选价值时可结束该路线，保留未决结论，不为“把计划跑完”占住后续研究。
+A bounded human-run probe can answer an unresolved physical question when authorization, interface, and safety conditions are in place. Use independent confirmation for claims about gains. On a priority change, stop at a safe boundary and mark any unfinished fixed-endpoint confirmation as incomplete. [Staged verification](research-efficiency.md)
 
-不要求先证明完整物理机制或离线收益才允许提出有界、由人执行的闭环探针；应满足相应授权、真实接口与原安全条件。独立验证用于支持最终收益结论，不是每个草稿的前置手续。用户改变优先级时按安全边界停止，原固定终点实验标记未完成，不据此宣称有效或无效。具体分级、缓存与停止规则见 [效率流程](research-efficiency.md)。
+### 1. Freeze the task and evidence scope
 
-### 1. 固定任务与证据等级
+Keep a short working record with the objective, baseline and SHA-256, runtime, encoding, normalization and control interface, budget used, current and next steps, exposed data, and missing evidence. Recheck it against the latest user instruction when resuming.
 
-保存简短工作记录：目标、唯一base和SHA256、冻结runtime/编码/归一化/控制接口、已有预算消耗、当前步骤、下一步、已暴露数据、尚缺证据。上下文恢复先核对它和最新用户指令；不用旧任务报告代替当前结果。
-
-| 有什么 | 可以做什么 |
+| Available evidence | Supported next step |
 |---|---|
-| 权重和推理源码 | 建立参数功能图、提出可证伪计算假说 |
-| 真机日志不足 | 编写并离线测试采集程序，交人执行 |
-| 带时间与动作来源的日志 | 重建原模型，做离线对照与干预 |
-| 闭环测试授权与有效接口 | 在冻结方案下获取真实新结果 |
-| 只有离线改善 | 报告候选与缺口，不能宣布成功率提高 |
+| Weights and inference source | Map parameter roles and state a falsifiable computational hypothesis |
+| Insufficient hardware logs | Prepare and test a collector offline for a human operator |
+| Logs with timing and command provenance | Reconstruct the baseline and test offline interventions |
+| Authorized closed-loop testing and a working interface | Obtain new observations under a frozen protocol |
+| Offline gains only | Report the candidate, computation, and remaining validation gap |
 
-### 2. 准入日志并重建base
+### 2. Accept logs and reconstruct the baseline
 
-用字段白名单构造policy输入。分开保存网络原始输出、安全器接受的命令、驱动层实际应用命令和传感器读回；没有证据不要把accepted写成executed。保留动作前观测、坐标系、单位、周期/动作块边界、估计误差、时间同步、重置及中断信息。失败原因注释保留置信度。
+Build model inputs from the allowlist. Keep raw model outputs, safety-accepted commands, driver-applied commands, and sensor readback separate. Record observations before action, frames, units, timing and chunk boundaries, estimation error, synchronization, resets, and interruptions. Label confidence in failure annotations.
 
-重算代表帧或连续前缀，核查编码/归一化、循环状态、上一实际命令、动作尺度和限幅。容差按部署dtype与硬件精度事前设定。源、输入或动作链不一致时先定位；修复初始化、模型指针、监控或接口不能算权重收益。
+Recompute representative frames or necessary prefixes and verify encoding, normalization, recurrence, prior actual commands, scaling, and clipping. Set tolerances for deployment dtype and hardware precision before comparing. Trace mismatches to source, inputs, or the action chain. Record initialization, model pointer, monitoring, and interface fixes separately.
 
-可用 `scripts/validate_bundle.py --manifest <dataset.json> --check-logs` 检查通用元数据、日志与分组。它不加载模型，不证明部署接口正确，也不验证碰撞或成功率。
+Use `scripts/validate_bundle.py --manifest <dataset.json> --check-logs` when full metadata, log, and grouping checks are useful. Model reconstruction, deployment behavior, and physical outcomes require separate evidence.
 
-按 [验收规范](adapter-and-integrity.md)记录适配器的A0结构、A1固定输入、A2所需状态/随机过程、A3保存重载/保留证据及适用范围；不是每次必须跑完的四道关。成功加载不等于重建policy，A3也不证明物理收益。编辑前核目标参数的共享/别名/包装与缓存影响；只改一个键不等于只改一条通路。
+Record the applicable adapter evidence for structure, fixed inputs, state or randomness, and candidate reload and retention. Check aliases, wrappers, and affected caches before editing. Inspect the consumers of changed weights. [Adapter acceptance](adapter-and-integrity.md)
 
-### 3. 按问题选择离线模式
+### 3. Choose offline comparison modes
 
-仅运行能回答当前问题的模式，选用两种时分别报告。无记忆单步网络不强制另跑一遍固定序列；涉及memory、积分、阶段切换、滤波或动作块的候选，在晋级前检查相关状态递推和退出残留。
+Run modes that answer the current question and report them separately. A stateless policy may only need a single step. For edits involving memory, integration, filtering, phase transitions, or chunks, check recurrence and residual effects before promotion.
 
-- `logged_state_one_step`：固定同一观测与同一pre-hidden/history/phase，比较base和候选的直接计算。未知pre-state需从完整前缀重建或标为不可比较。
-- `fixed_observation_sequence`：固定已记录观测序列，让各模型递推各自内部状态；记录历史动作输入的语义。候选动作并未驱动物理世界生成这些观测。
+- **`logged_state_one_step`.** Compare direct computation on the same observation, prior hidden state, history, and phase. Rebuild unknown state from the necessary prefix or mark that comparison unavailable.
+- **`fixed_observation_sequence`.** Keep logged observations fixed and let each policy update its own internal state. Record how previous actions enter the policy. These observations were generated by the behavior policy.
 
-两者都不是物理反事实。旧日志的后续状态、奖励和成功属于采集时behavior policy；不得给候选动作套上旧成功标签。缺少动作支持、有效动力学或校准估计器时，不输出候选离线return/成功率。成功轨迹动作接近也不等于闭环成功。
+Attribute logged states, rewards, and success to the policy that produced them. Offline return estimates require action support, valid dynamics, or a calibrated estimator. A close match to successful logged actions supports a local retention check.
 
-随机候选比较区分同扰动计算效应与跨扰动稳定性。同seed不自动配对；优先显式噪声/随机动作输入或核验过的独立随机流。分支、采样次数或调用顺序变化会破坏配对；无法核验时用有界重复采样并降低结论范围，详见 [随机性协议](adapter-and-integrity.md#rng-protocol)。
+Distinguish effects under shared perturbations from stability across perturbations. Prefer explicit noise or verified separate random streams. Check branch-dependent draw order. Use bounded repeats and report reduced pairing scope when exact control is unavailable. [Randomness protocol](adapter-and-integrity.md#rng-protocol)
 
-### 4. 从机制假说到权重表达
+### 4. Turn the mechanism into a weight edit
 
-给出当前通路所需的最小参数功能图：张量键/shape、输入语义与坐标、非线性、输出路径、状态累积、作用条件、退出条件和共享范围；不把完整全网图谱当开始尝试的前置条件。不要仅凭名字解释权重；区分学习参数、buffer、配置与固定代码。学习得到的阶段时长可以是参数，固定控制周期不是参数。
+Map only the path needed for the hypothesis, including tensor keys and shapes, input meaning and frames, nonlinearities, output consumers, accumulated state, entry and exit conditions, and sharing. Separate learned parameters from buffers, config, and fixed code. A learned phase duration can be editable. A fixed control period is part of the execution setup.
 
-每个假说写明：**观测问题 → 拟定位通路 → 修改前的可检验预测 → 否定条件**。先找首次相关分岔，避免只按最终落点猜方向。比较失败与适配条件相近的成功，检查相同现象是否也出现在成功案例。
+Connect an observed problem to a computational path, a prediction made before the edit, and a falsifier. Locate the earliest relevant divergence. Compare failures with comparable successes and check whether the same phenomenon occurs in both.
 
-可用矩阵分析、激活分解、组件消融、方向投影、解析构造或跨层已有神经元通路改写。按问题选择 [干预流程](intervention-workflow.md) 的必要模块。已能解析预测作用时可直接构造权重候选做离线对照，不强制先做激活替换、SVD或双向干预；hook有效不等于checkpoint已实现同样功能。
+Choose matrix analysis, activation decomposition, ablation, directional projection, analytic construction, or rewiring of existing cross-layer paths. Screen predictable analytic edits directly. For interventions that use hooks, verify the saved checkpoint implements the effect. [Intervention workflow](intervention-workflow.md)
 
-声明方法类别：`analytic_wsp`（机理驱动解析编辑）、`statistical_intervention`（从开发激活估计方向/协方差）、`constraint_repair`（明确规格下的约束求解）、`supervised_fit`或`gradient_training`。默认不用backward、autograd、optimizer或迭代拟合损失。无梯度不等于无训练：闭式拟合动作标签也属数据拟合；它和新增训练只在用户相应授权下另列，不冒充原研究严格复现。
+Label the method `analytic_wsp`, `statistical_intervention`, `constraint_repair`, `supervised_fit`, or `gradient_training`. Default to direct edits without backward passes, autograd, an optimizer, or iterative loss fitting. Closed-form fits to action labels still count as supervised fitting. Scope fitting and new training separately with the relevant authorization.
 
-不以“改得越少越好”或固定标量个数限制方法。按功能允许稀疏、低秩或参数块修改；用实际输出变化、作用范围、记忆余效和可观察约束确定幅度。按任务目标事先声明可接受的能力代价与晋级标准；不把“所有输出不变、所有案例零退化”默认为硬门，也不为探索取消真实安全边界。需要动态选择性时，检查原网络输入和结构能否表达；表达不了就报告架构限制，不偷偷加任务脚本、真值或新模块。
+Choose sparse, low-rank, or block edits by functional effect, scope, memory, and observable constraints. Define acceptable retention costs and promotion criteria before screening. Preserve hard safety boundaries. For conditional effects, verify the existing inputs and network can express the needed behavior. Report architectural limitations or scope extensions separately.
 
-### 5. 构造并筛查候选
+### 5. Construct and screen candidates
 
-从唯一base副本构造，不覆盖base。内存探索变体可只保留确定性编辑程序/差分和调用记录，不要求每个变体都落完整checkpoint；晋级候选再保存重载。记录学习参数资格、受影响张量dtype/shape、实际差分、其余参数/buffer变化和构造依据；物化文件记hash。保留失败变体与候选。量化或BF16舍入可能使修改失效。
+Build from an isolated copy of the unique baseline. Keep deterministic edit code or a diff and accounting for in-memory variants. Save and reload promoted candidates. Record eligibility as learned weights, actual tensor shapes and dtypes, the realized diff, other parameter or buffer changes, and construction rationale. Hash saved files. Keep failed trials and check for edits erased by quantization or BF16 rounding.
 
-按假说选择必要对照：base、正负方向、少量有意义强度、同范数随机方向或组件隔离；不机械跑满所有对照。先固定判断规则，再看确认数据。正负都有效时，不能宣称符号单调机制已证实。
+Use controls appropriate to the hypothesis, such as the baseline, sign, meaningful strengths, an equal-norm random direction, or component isolation. Freeze decision criteria before confirmation. If both signs help, keep alternative explanations open.
 
-离线检查数值重建、动作/开度界、时序与平滑性、门控/饱和、状态残留、成功日志上的变化和数据支持。噪声/时延测试注明实测依据或合成假设，不替代真机鲁棒性证据。限位通过不等于碰撞/接触安全通过。
+Check reconstruction, action and gripper bounds, timing and smoothness, gating and saturation, residual state, original-success windows, and data support. State how noise and latency assumptions were obtained. Report contact and collision acceptance from applicable execution evidence.
 
-筛查用少量与假说匹配的已知失败和相关成功案例，按预设判据分别检查修复机会和退化。基线全成功或失败机制不匹配时，记录修复覆盖缺口，换有区分力的样本或停止这条路线。只对晋级候选扩大保留面板，报告最差窗口、覆盖和选择历史。具体见 [筛查选样与停止](research-efficiency.md#screening-sample-selection)。
+Screen representative known failures and related successes. If the baseline succeeds everywhere or diverges for a different reason, report the coverage gap, change examples when informative, or stop. Expand retention only for promoted candidates. Report the worst windows, coverage, and selection history. [Screening samples and stopping](research-efficiency.md#screening-sample-selection)
 
-探索可登记后更新假说与对照，不能事后改标签冒充预注册确认。临时干预若要晋级为永久候选，应能写入原架构，去hook、保存重载并复查相关离线模式。阳性对照按工具故障风险选择最便宜的一项，不必同时复现公开大实验；有效且未受变化影响的证据直接复用。具体见 [干预流程](intervention-workflow.md)。
+Record revisions to exploratory hypotheses and controls as development. For permanent candidates, fold into the original architecture, remove hooks, save and reload, and recheck relevant offline modes. Use a minimal positive control to isolate technical risks and reuse still-valid checks. [Intervention workflow](intervention-workflow.md)
 
-从 `assets/experiment.template.json` 和 `assets/evidence.template.json` 开始。已知失败原初态及其重复reset和派生近邻留在原物理case组作开发或回归。独立确认另留未暴露的新初态，按完整episode、session及物理case分组隔离。
+Start with `assets/experiment.template.json` and `assets/evidence.template.json` as appropriate. Keep known failing initial states, repeated resets, and derived neighbors under the original case group. Reserve unseen initial conditions, complete episodes, sessions, and physical case groups for confirmation.
 
-### 6. 冻结后只做必要闭环确认
+### 6. Freeze before closed-loop confirmation
 
-按 [真机验证](real-robot-validation.md) 提出最少、能回答问题的闭环设计；只在已有有效授权、接口和原安全系统就绪的范围执行。无需精确复现旧轨迹；用预先声明的条件分层、随机交错、重复与对照处理初态差异。
+Use the smallest design that answers the question within available authorization, verified interfaces, and original safety controls. Match or stratify initial conditions in advance. Randomize pair order or repeat when needed. [Hardware confirmation](real-robot-validation.md)
 
-默认交人执行冻结方案，agent交付版本锁定的采集/评估程序、操作单和回收格式。返回后先核对运行模型、人工介入及日志完整性；人工采集不自动等于盲测或独立样本。
+By default, hand a human the frozen candidate, versioned collector or evaluator, run sheet, and return format for hardware. Verify the actual model, interventions, and completeness on return. Record independence and whether the operator knew the versions.
 
-验证开始后冻结候选，正常失败与退化都保留。技术/安全停止与策略失败分开；不事后改成功标准，不看中途结果无限加样。离线不合格可否定候选，离线合格仍不能保证物理收益。
+Keep the candidate and success criteria frozen during confirmation. Retain normal failures and regressions. Report technical and safety stops separately. Follow the prespecified endpoint. Use offline checks to screen computational effects and closed-loop evidence to establish physical gains.
 
-### 7. 交付与预算
+### 7. Report evidence and cost
 
-用四层结论：①参数计算作用；②日志上的离线变化；③特定闭环案例修复；④独立初态收益。分别写已证实、线索和未知，注明外部给定公式或方向等帮助，不把受辅助结果说成自主发现。
+Separate parameter computation, offline changes on logs, case-level closed-loop repairs, and gains on independent starts. State confirmed findings, hypotheses, unknowns, and any supplied formulas or directions.
 
-交付随阶段裁剪：base/变体或候选身份与diff、所用数据/分组、假说与反证、选用模式的结果、覆盖与不确定性、下一步或有据NO_GO、调用与费用记录。未用方法注明不适用或省略原因即可，不为填满模板新增实验。无新物理测试也可完成有用交付。
+Report baseline and candidate identities and diff, data and groups, hypothesis and falsifiers, modes used, coverage and uncertainty, decision or justified NO_GO, and actual calls and costs. Omit inapplicable fields and choose deliverables for the current stage.
 
-有结构化计划/结果时，可用 `scripts/check_experiment.py --plan <plan.json> --record <record.json>` 做只读一致性检查；文件hash核验按需加`--check-artifacts`。它检查声明、来源/数据分组/冻结记录/结论层级，不验证声明真实性，不是审批、运动许可或要求补跑的流程。最小记录见 `assets/experiment-record.template.json`；可行性审查不要求生成候选或收齐不相关字段。
+For structured records, `scripts/check_experiment.py --plan <plan.json> --record <record.json>` performs read-only consistency checks. Add `--check-artifacts` when evidence files can be verified locally. The check covers provenance fields, grouping, freeze records, and claim types. Scientific validity and motion authorization are separate. Start from `assets/experiment-record.template.json` where useful.
 
-前向按处理帧/序列及base、候选、组件调用计数；批量一次不等于一帧。包含预热、失败、重建与重放，区分预约与实际。获批追加预算保留累计及依据，不重置旧费用。导出被审批拒绝时不改名/分块绕过，继续不依赖导出的工作并说明阻塞。
+Account for actual baseline, candidate, and component forwards by frame or sequence, including warmup, failures, reconstruction, and replay. Record reservations separately and preserve prior costs when expanding an authorized budget. Honor denied exports and continue work that does not depend on them.
 
-下游agent先从一个代表episode完成无环境前向，再按证据扩展；通用契约、模板校验或skill安装不等于真机验证完成。
-
-随附 `scripts/affine_patch.py` 是NumPy离线工具：把固定仿射干预折叠进单个线性层并检查给定特征上的数值等价；不是通用policy加载器、LEACE拟合器或真机程序。开源工具为可选依赖，本skill不会因被调用自动安装全部工具、发送权重到外部API或连接机器人。
+Start a new adapter with a representative environment-free forward and expand based on evidence. The bundled NumPy helper folds a fixed affine transform into one linear layer and checks numerical equivalence on given features. Choose third-party tools as needed and keep installs, external transfers, and device connections within their authorization.
