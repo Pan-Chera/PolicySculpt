@@ -48,6 +48,29 @@ Measure retention by task benefit, loss of original capabilities, and uncertaint
 - Continue valid local or static analysis when logs are incomplete. State what remains incomparable. Keep future ground truth outside the policy. Use strict log validation where the full contract applies.
 - Prefer native hooks or matrix operations for small tasks. Reuse available tools. Run independent lightweight work in parallel only within authorized resources. Isolate locks, hardware control, confirmation data, and mutable state.
 
+<a id="sample-resume"></a>
+## Resume a frozen evaluation by sample
+
+For interruptible evaluations, the standard-library helper `scripts/sample_resume.py` stores complete paired receipts. It follows Inspect AI's use of stable sample IDs to retain completed results across retries. [Inspect AI evaluation logs and retries](https://inspect.aisi.org.uk/eval-logs.html#eval-retries)
+
+- Bind the complete checkpoint identities for the baseline and candidate separately, including all model components actually loaded. Bind evaluator identity to execution and scoring code, settings, runtime, and any random protocol that affects outcomes. Give each stable sample ID a digest of its native input, exact initial state, and required random inputs or stream. Use byte or file hashes for native state.
+- Resume the same frozen plan in a different order when samples are independent of execution order. Reuse only committed pairs with two technically valid results, matching identities, and an intact receipt hash. Valid policy failures are results. Keep attempt records for invalid or interrupted pairs and rerun them under the original rules. A changed identity or sample set requires a separate run directory.
+- The caller verifies actual identities and result validity. Use a single coordinator to schedule and commit pairs. The task's existing runner owns environment execution, scoring, and safe stopping.
+
+```python
+from sample_resume import SampleJournal
+
+# identities maps baseline, candidate, and evaluator to SHA-256 digests.
+# sample_hashes maps stable IDs to hashes of the actual inputs.
+journal = SampleJournal(run_dir, identities, sample_hashes)
+done = journal.completed()
+for sample_id in sample_hashes:
+    if sample_id in done:
+        continue
+    baseline_result, candidate_result = evaluate_valid_pair(sample_id)
+    journal.commit(sample_id, baseline_result, candidate_result)
+```
+
 ## Responsive execution and stopping
 
 Humans handle hardware collection and confirmation by default. Verify a cooperative stop entry point such as `stop_after_current_episode` or `stop_after_current_pair` in collectors and simulation schedulers. Check it before starting the next episode or pair. Preserve completed work and list runs that never started. Make run order and pairing boundaries explicit. Leave motion stops to the verified safe mechanism.
