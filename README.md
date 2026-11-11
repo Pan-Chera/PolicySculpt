@@ -20,9 +20,15 @@ The original policy on the left fails the release check and leaves the goblet ti
 
 One simulated arm holds the cube while the other turns its layers according to the solver's move sequence. PS shifts the holding gripper's learned trajectory anchors **1.2 mm** toward the fixed layer to clear the rotating layer. The evaluation uses the original solver, acceptance criteria, and policies for the other moves.
 
-![Paired replay of the same scramble. A red circle marks the wrong-layer contact on move two.](assets/showcase/cube-solve.gif)
+The two close-ups show the original policy on the left and PS on the right, aligned by control tick at **0.2× speed**. Red rings mark recorded wrong-layer contact. Green rings show the clearance between the same pad and cubie after the edit. On hardware, this contact could obstruct the turn or jam the cube.
 
-Move two in scramble 04 is `D`, a 90° turn of the bottom layer. The holding gripper touches the rotating layer during **20 of the 200 control ticks**, causing the original policy to fail the move. On hardware, the same contact could obstruct the turn or jam the cube. The replay pauses at the contact and marks its location with a red circle. PS records **0/200** wrong-layer contact ticks on the same move and completes all eight moves. [Watch MP4](assets/showcase/cube-solve.mp4)
+**Case 06, move 6 (`D`).** Wrong-layer contact fell from **41/200** to **0/200** control ticks.
+
+![Case 06 close-up of the repaired bottom-layer turn.](assets/showcase/cube-case-06.gif)
+
+**Case 28, move 5 (`D'`).** Wrong-layer contact fell from **27/200** to **0/200** control ticks.
+
+![Case 28 close-up of the repaired bottom-layer turn.](assets/showcase/cube-case-28.gif)
 
 ### Connect Four
 
