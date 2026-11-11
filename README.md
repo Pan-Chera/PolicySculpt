@@ -1,8 +1,8 @@
 # PolicySculpt
 
-**Improve trained robot policies by editing their weights directly.**
+**Direct weight editing for robot policies.**
 
-PolicySculpt is a Codex skill that fixes a specific failure in an existing policy. In paired simulation tests, direct weight edits improved bimanual handoff and 2×2 cube solving with **zero gradient training steps**.
+PolicySculpt is a Codex skill built for embodied control. It edits the weights behind a robot behavior and tests the original and edited policies from the same initial states. We used it to improve bimanual goblet handoff and 2×2 cube solving in simulation with **zero gradient training steps**.
 
 Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.html)
 
@@ -17,7 +17,7 @@ Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.ht
 
 ### Bimanual Goblet Handoff
 
-We edited six parameters that govern the receiving arm’s approach and phase timing. In the same-start example below, the original policy leaves the goblet tilted **12°**, while the edited policy sets it down upright. [Watch MP4](assets/showcase/goblet-handoff.mp4)
+With PolicySculpt, we edited six learned parameters that govern the receiving arm’s approach and phase timing. In the same-start example below, the original policy leaves the goblet tilted **12°**, while the edited policy sets it down upright. [Watch MP4](assets/showcase/goblet-handoff.mp4)
 
 ![Simulated goblet placement from the same initial state. Original policy on the left, edited policy on the right.](assets/showcase/goblet-handoff.gif)
 
@@ -29,21 +29,20 @@ We shifted learned trajectory anchors for the holding gripper away from the rota
 
 The replay kept all **21** original solves. On a separate set of 10 new scrambles, split evenly between ordinary and high-risk move sequences, full solves rose from **4/10 to 10/10**.
 
-<details>
-<summary>Two other uses of the same workflow</summary>
+## Beyond Robotics
 
-- **Connect Four.** Editing the action head removed **7,928 mirror disagreements** across 24,000 held-out endgames, bringing the count to **zero**. The edit changed **1,798** of 134,735 parameters. [Board comparison](assets/showcase/connect-four.png)
+The same workflow can run on fixed inputs. We used it in two offline tasks.
+
+- **Connect Four.** Editing the action head reduced mirror disagreements from **7,928 to 0** across 24,000 held-out endgames. The edit changed **1,798** of 134,735 parameters. [Board comparison](assets/showcase/connect-four.png)
 - **Photo retouching.** Editing the exposure regressor reduced mean highlight clipping from **12.90% to 2.50%** across 65 eligible held-out FiveK photos. The edit changed **129** of 6,123,680 parameters. [Photo comparison](assets/showcase/exposure-rocket.jpg)
 
-</details>
-
-## How It Works
+## How It Works for Robots
 
 1. Trace a repeatable failure to the computation that drives it.
 2. Edit the relevant weights, screen candidates, then save and reload one checkpoint.
-3. Run the original and edited policies on the same test cases and check that previously successful behavior still passes.
+3. Run both policies from matched initial states and check task success and retained behaviors.
 
-Use PolicySculpt when a trained policy already has the skill you need and you can isolate a specific failure. The policy adapter runs native inference. The task evaluator measures outcomes in your simulator or on fixed inputs. The approach builds on Takehi et al.’s work on reading and editing model weights directly. [Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/)
+The policy adapter runs the robot’s existing inference code. The task evaluator resets the environment, runs the robot in closed loop, and scores the outcome. Use PolicySculpt when an existing policy can already perform the task and you can isolate the behavior to improve.
 
 ## Quick Start
 
@@ -67,6 +66,8 @@ with the original on held-out cases. Check that the original successes still pas
 ## Authors and Citation
 
 **Guanxing Qu** and **Xueyan Zou**, Tsinghua University IEI Lab. [Citation metadata](CITATION.cff)
+
+The direct weight-editing approach was inspired by Takehi et al. (MIT CSAIL, 2026). [Research article](https://rikiyat.github.io/blog/weight-space-programming/)
 
 ```bibtex
 @misc{qu2026policysculpt,
