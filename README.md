@@ -64,7 +64,9 @@ The Blender replay uses recorded arm joints and goblet poses from one paired rep
 
 One simulated arm holds the cube while the other turns a layer. For bottom quarter-turns, the holding gripper sometimes contacts the rotating layer. The edit shifts its learned trajectory anchors 1.2 mm toward the fixed layer. The solver, acceptance criteria, and other move policies stay fixed.
 
-Full solves rose from **21/30 to 25/30** when replaying the original scrambles, with all 21 original successes preserved. On ten separately frozen new scrambles, the ordinary stratum went from **4/5 to 5/5** and the stratum enriched for a high-risk move sequence went from **0/5 to 5/5**. The Blender clip shows a full replay of original scramble 04. The original policy stops on move two after **20 control ticks** of wrong-layer contact. The edited policy has **zero** wrong-layer contact ticks on that move and completes all eight moves. The final close-up shows both physical cube states.
+Full solves rose from **21/30 to 25/30** when replaying the original scrambles, with all 21 original successes preserved. On ten separately frozen new scrambles, the ordinary stratum went from **4/5 to 5/5** and the stratum enriched for a high-risk move sequence went from **0/5 to 5/5**.
+
+**Why the original run stopped at move 2.** In scramble 04, move `D` turns the bottom layer by 90°. The original turn passed the geometry check. The holding gripper touched the rotating layer during **20 of 200 control ticks**, so the evaluator rejected the move because its contact check requires zero wrong-layer contact and ended the episode. WSP passed the same move with **0/200 wrong-layer contact ticks** and completed all eight moves. The Blender replay pauses at the contact and marks its recorded position in red.
 
 ### Connect Four
 
