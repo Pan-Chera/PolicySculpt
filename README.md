@@ -2,11 +2,11 @@
 
 **Direct weight editing for robot policies.**
 
-PolicySculpt is a Codex skill built for embodied control. It edits the weights behind a robot behavior and tests the original and edited policies from the same initial states. We used it to improve bimanual goblet handoff and 2×2 cube solving in simulation with **zero gradient training steps**.
+PolicySculpt brings direct weight editing for embodied control to **Codex and Claude Code**. We used it to improve bimanual goblet handoff and 2×2 cube solving in paired simulation tests with **zero gradient training steps**.
 
 Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.html)
 
-[![Codex Skill](https://img.shields.io/badge/Codex-Skill-3069b3.svg)](#quick-start) [![Paired simulation evaluation](https://img.shields.io/badge/Evaluation-Paired%20simulation-5e5aa7.svg)](#robotics-results)
+[![Codex Skill](https://img.shields.io/badge/Codex-Skill-3069b3.svg)](#codex) [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-a65535.svg)](#claude-code) [![Paired simulation evaluation](https://img.shields.io/badge/Evaluation-Paired%20simulation-5e5aa7.svg)](#robotics-results)
 
 ## Robotics Results
 
@@ -46,17 +46,32 @@ The policy adapter runs the robot’s existing inference code. The task evaluato
 
 ## Quick Start
 
-From your project root, clone the skill. Access to the private repository is required.
+Start in the project where you want to edit a policy. Access to the private repository is required.
+
+### Codex
 
 ```bash
 git clone https://github.com/Pan-Chera/PolicySculpt.git \
   .agents/skills/robot-weight-programming
 ```
 
-Give Codex your checkpoint, native inference command, and an evaluator with representative failures and successes.
+Invoke `$robot-weight-programming` in Codex.
+
+### Claude Code
+
+```bash
+git clone https://github.com/Pan-Chera/PolicySculpt.git .policysculpt
+claude --plugin-dir "$PWD/.policysculpt/claude-code"
+```
+
+Invoke `/policysculpt:edit` to edit a policy. Use `/policysculpt:embodied` for standalone robot trace analysis or paired simulation. [Claude Code plugin guide](claude-code/README.md)
+
+### Give the Agent a Task
+
+Provide the checkpoint, native inference command, and an evaluator with representative failures and successes.
 
 ```text
-Use $robot-weight-programming to fix this repeatable failure.
+Fix this repeatable robot policy failure.
 Edit the relevant weights, save and reload a candidate, and compare it
 with the original on held-out cases. Check that the original successes still pass.
 ```

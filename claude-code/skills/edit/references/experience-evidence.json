@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "reviewed_date": "2026-11-09",
+  "locator_roots": {
+    "rsi_skill_evidence": "iei-server:/home/guanxing/rsi-xarm7-g2/rsi_state/real_rsi_v1/skill_evidence",
+    "codex_documents_root": "Historical user workspace documents root. The indexed original paths could not be resolved on 2026-11-09."
+  },
+  "status_semantics": {
+    "archive_files_checked": "Server archive manifest entries were verified, and archived screening and confirmation summaries were read. Original external files were not rehashed and no experiment was rerun in this skill review.",
+    "report_file_checked": "Report content and SHA256 were checked when originally indexed. See availability for current access.",
+    "empirical_reminder": "General methodological reminder without a located specific experiment artifact; do not cite as a verified case."
+  },
+  "artifacts": [
+    {
+      "id": "goblet_receiver_entry_timing",
+      "locator_root": "rsi_skill_evidence",
+      "relative_path": "goblet_wsp_receiver_entry_timing_20261109/README.md",
+      "sha256": "994d4dc05a96766e500771b2b7512a12e666fd3971f3cb4384fa72f73f6f6afc",
+      "status": "archive_files_checked",
+      "method_class": "analytic_wsp",
+      "evidence_scope": "Independent paired simulation confirmation of the same historical candidate on fresh initial states",
+      "manifest_sha256": {
+        "SHA256SUMS": "2d7533c82c1be513947612f52fdbcc8a4f46883e99e49fb7a8c135f68dee3f7a",
+        "ORIGINALS.sha256": "c35d2f9d44dcc70a564b5706df36cccfefb690bf3f04c3a85c76112f08f9670e"
+      },
+      "archive_entries_verified": 302,
+      "experiment_independently_reproduced_by_skill_author": false
+    },
+    {
+      "id": "case22_target",
+      "locator_root": "codex_documents_root",
+      "relative_path": "2026-11-03/bowl-policy-weight-editing-20261103/outputs/goblet_joint_weight_edit_20261104/CASE22_TARGET_AND_PHYSICS_COMPARISON.json",
+      "sha256": "1c174929aa8c3e5c83e7045cdc72c4c07b4fe639616308044d3ef15ef8888c54",
+      "status": "report_file_checked",
+      "availability": "original_path_unavailable",
+      "experiment_independently_reproduced_by_skill_author": false
+    },
+    {
+      "id": "stage2_direction",
+      "locator_root": "codex_documents_root",
+      "relative_path": "2026-11-04/goblet-wsp-mechanism-review-20261104/outputs/goblet_wsp_mechanism_review_20261104/stage2_direction_review/DIRECTION_EVIDENCE.zh.txt",
+      "sha256": "a2a6b625c0721f544d02b7e2264b8773085caa1f6e918d4e8aec6473d5dd21c1",
+      "status": "report_file_checked",
+      "availability": "original_path_unavailable",
+      "experiment_independently_reproduced_by_skill_author": false
+    },
+    {
+      "id": "stage7_report",
+      "locator_root": "codex_documents_root",
+      "relative_path": "2026-11-04/goblet-wsp-mechanism-review-20261104/outputs/goblet_wsp_mechanism_review_20261104/stage7_replication_and_protection/REPORT.zh.txt",
+      "sha256": "5df4fdb36ec71dbd46d0a65ad71d0bd548d99a6a09f1c6c8a579b9aed5463865",
+      "status": "report_file_checked",
+      "availability": "original_path_unavailable",
+      "experiment_independently_reproduced_by_skill_author": false
+    },
+    {
+      "id": "stage7_protocol",
+      "locator_root": "codex_documents_root",
+      "relative_path": "2026-11-04/goblet-wsp-mechanism-review-20261104/outputs/goblet_wsp_mechanism_review_20261104/stage7_replication_and_protection/PROTOCOL_REVISION_AUDIT.json",
+      "sha256": "120699d8002c2c253c01b0b6fdf8eab363cf82fc1c9d942f7d8add58e27e127e",
+      "status": "report_file_checked",
+      "availability": "original_path_unavailable",
+      "experiment_independently_reproduced_by_skill_author": false
+    },
+    {
+      "id": "stage8_9",
+      "locator_root": "codex_documents_root",
+      "relative_path": "2026-11-04/goblet-wsp-mechanism-review-20261104/outputs/goblet_wsp_mechanism_review_20261104/STAGE8_9_FINAL.zh.txt",
+      "sha256": "a01d0ba197f9366e36561f7c7e0769b381e5c5eaa365d5f6a3eb9b9c2c343267",
+      "status": "report_file_checked",
+      "availability": "original_path_unavailable",
+      "experiment_independently_reproduced_by_skill_author": false
+    },
+    {
+      "id": "stage5_identity",
+      "locator_root": "codex_documents_root",
+      "relative_path": "2026-11-04/goblet-wsp-mechanism-review-20261104/outputs/goblet_wsp_mechanism_review_20261104/stage5_admission_fix_and_probe/REPORT.zh.txt",
+      "sha256": "f709889fd403276a25db60b9d0a6b6d2e351effaa944b438c4f63e1f0b0a744e",
+      "status": "report_file_checked",
+      "availability": "original_path_unavailable",
+      "experiment_independently_reproduced_by_skill_author": false
+    }
+  ],
+  "lessons": [
+    {
+      "id": "L1",
+      "artifacts": [
+        "case22_target"
+      ],
+      "status": "report_file_checked"
+    },
+    {
+      "id": "L2",
+      "artifacts": [
+        "stage2_direction"
+      ],
+      "status": "report_file_checked"
+    },
+    {
+      "id": "L3",
+      "artifacts": [
+        "stage7_report"
+      ],
+      "status": "report_file_checked"
+    },
+    {
+      "id": "L4",
+      "artifacts": [
+        "stage8_9"
+      ],
+      "status": "report_file_checked"
+    },
+    {
+      "id": "L5",
+      "artifacts": [
+        "stage7_protocol",
+        "stage7_report"
+      ],
+      "status": "report_file_checked"
+    },
+    {
+      "id": "L6a",
+      "artifacts": [
+        "stage5_identity"
+      ],
+      "status": "report_file_checked"
+    },
+    {
+      "id": "L6b",
+      "artifacts": [],
+      "status": "empirical_reminder"
+    },
+    {
+      "id": "L7",
+      "artifacts": [
+        "stage7_report"
+      ],
+      "status": "report_file_checked"
+    }
+  ]
+}

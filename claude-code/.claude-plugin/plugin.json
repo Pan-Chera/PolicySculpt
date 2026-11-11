@@ -1,0 +1,10 @@
+{
+  "name": "policysculpt",
+  "version": "0.1.0",
+  "description": "Direct weight editing for trained policies and independent embodied-policy diagnostics.",
+  "author": {
+    "name": "Tsinghua University IEI Lab"
+  },
+  "homepage": "https://github.com/Pan-Chera/PolicySculpt",
+  "repository": "https://github.com/Pan-Chera/PolicySculpt"
+}
