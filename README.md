@@ -1,149 +1,163 @@
-<h1 align="center">Policy Weight-Space Programming</h1>
+# PolicySculpt (PS) — Direct Weight Editing for Trained Policies
 
-<p align="center">
-  <strong>Gradient-free checkpoint edits for robot control, game decisions, and image retouching.</strong>
-</p>
+> Tsinghua University, College of AI · Interactive Embodied Intelligence Lab (IEI Lab) · [Lab website](https://maureenzou.github.io/lab.html)
 
-<p align="center">
-  <a href="#quick-start">Quick start</a> ·
-  <a href="#inside-the-skill">Inside the skill</a> ·
-  <a href="#authors">Authors</a> ·
-  <a href="#citation">Citation</a>
-</p>
+[![Codex Skill](https://img.shields.io/badge/Codex-Skill-3069b3.svg)](#quick-start) [![Gradient-free weight editing](https://img.shields.io/badge/Weight%20editing-Gradient--free-15816a.svg)](#why-choose-ps) [![Paired evaluation](https://img.shields.io/badge/Evaluation-Paired-5e5aa7.svg)](#paired-evaluation-results)
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="assets/showcase/goblet-handoff.gif" alt="Close-up of the same simulated placement. The original policy leaves the goblet tilted 12 degrees. The WSP policy leaves it upright." width="460"><br>
-      <strong>Goblet handoff · 18/28 → 25/28</strong><br>
-      Complete transfers and stable placements on new paired simulation starts.<br>
-      <a href="#goblet-handoff">Case details</a> · <a href="assets/showcase/goblet-handoff.mp4">MP4</a>
-    </td>
-    <td width="50%" align="center">
-      <img src="assets/showcase/cube-solve.gif" alt="Paired replay of the same cube scramble. The original policy stops at move two after wrong-layer contact. The WSP policy finishes all eight moves and solves the cube." width="460"><br>
-      <strong>2×2 cube solving · 21/30 → 25/30</strong><br>
-      Complete solves on the original paired regression cohort.<br>
-      <a href="#bimanual-cube-solving">Case details</a> · <a href="assets/showcase/cube-solve.mp4">MP4</a>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="assets/showcase/connect-four.png" alt="A Connect Four board and its reflection. WSP selects corresponding columns 1 and 7, both winning moves." width="460"><br>
-      <strong>Connect Four · 7,928 → 0</strong><br>
-      Mirror disagreements across 24,000 held-out endgame boards.<br>
-      <a href="#connect-four">Case details</a>
-    </td>
-    <td width="50%" align="center">
-      <img src="assets/showcase/exposure-preview.jpg" alt="Identical launch-pad crops show more highlight detail around the base of the rocket in the WSP output." width="460"><br>
-      <strong>Photo retouching · 12.90% → 2.50%</strong><br>
-      Mean recoverable-highlight clipping on 65 eligible held-out photos.<br>
-      <a href="#photo-retouching">Case details</a>
-    </td>
-  </tr>
-</table>
+PolicySculpt is a Codex skill that uses Weight-Space Programming (WSP) to improve specific behaviors in trained policies. Given a checkpoint, a native inference entry point, and examples of failures, Codex traces the computations involved, edits the learned weights directly, and saves and reloads the candidate for paired evaluation against the original policy. The four cases cover robot control, game decisions, and photo retouching. All four edits used **zero gradient training steps**.
 
-## What you can do with it
+## Case Studies
 
-Policy Weight-Space Programming is a Codex skill for changing a specific behavior in a trained policy and measuring the effect against its original checkpoint.
+### Bimanual Goblet Handoff
 
-A robot grazes the wrong layer of a cube. A game policy makes different decisions when the board is mirrored. A retouching policy pushes textured highlights to white. In each case, the skill helps Codex locate the calculation that could explain the behavior and translate a testable hypothesis into an edit to the trained weights.
+Two simulated arms pass a goblet in midair and set it down. PS edits **6 scalar parameters**, shifting the receiving arm's approach by **1.35 mm** and shortening the learned durations of five phases.
 
-Start with a checkpoint, its native inference entry point, and examples of the behavior you want to change. Codex traces the path from inputs through the relevant tensors to the action, screens candidate edits, and saves the selected checkpoint. Reloading it through the original inference path tests that the edit survives serialization. Paired evaluation measures the intended improvement and checks behavior you want to preserve.
+![Placement close-up from the same initial state. Original policy on the left, PS on the right.](assets/showcase/goblet-handoff.gif)
 
-The four showcase edits used zero gradient-training steps. The same workflow supports static decisions and stateful policies. Each task supplies its own inputs, metrics, and evaluator. Simulation is an optional evaluator for claims about interaction, contact, or task completion.
+The original policy on the left fails the release check and leaves the goblet tilted **12.0°**. PS on the right sets the goblet down upright and stable. [Watch MP4](assets/showcase/goblet-handoff.mp4)
 
-## The four cases
+### Bimanual 2×2 Cube Solving
 
-### Goblet handoff
+One simulated arm holds the cube while the other turns its layers according to the solver's move sequence. PS shifts the holding gripper's learned trajectory anchors **1.2 mm** toward the fixed layer to clear the rotating layer. The evaluation uses the original solver, acceptance criteria, and policies for the other moves.
 
-Two simulated arms pass a goblet in midair and set it down. Six edited scalars shift the receiver’s entry by 1.35 mm and shorten five learned phase durations. Across **28 paired new initial states**, complete handoff and stable placement rose from **18/28 to 25/28**. The confirmation cohort deliberately emphasized the `1→0` direction, where success rose from **14/22 to 21/22**.
+![Paired replay of the same scramble. A red circle marks the wrong-layer contact on move two.](assets/showcase/cube-solve.gif)
 
-The Blender replay uses recorded arm joints and goblet poses from one paired repair. The close-up shows the final placement phase from the same initial state. The original policy fails the release check with the goblet tilted **12.0°**. The edited policy completes stable placement with the goblet upright.
-
-### Bimanual cube solving
-
-One simulated arm holds the cube while the other turns a layer. For bottom quarter-turns, the holding gripper sometimes contacts the rotating layer. The edit shifts its learned trajectory anchors 1.2 mm toward the fixed layer. The solver, acceptance criteria, and other move policies stay fixed.
-
-Full solves rose from **21/30 to 25/30** when replaying the original scrambles, with all 21 original successes preserved. On ten separately frozen new scrambles, the ordinary stratum went from **4/5 to 5/5** and the stratum enriched for a high-risk move sequence went from **0/5 to 5/5**.
-
-**Why the original run stopped at move 2.** In scramble 04, move `D` turns the bottom layer by 90°. The original turn passed the geometry check. The holding gripper touched the rotating layer during **20 of 200 control ticks**, so the evaluator rejected the move because its contact check requires zero wrong-layer contact and ended the episode. WSP passed the same move with **0/200 wrong-layer contact ticks** and completed all eight moves. The Blender replay pauses at the contact and marks its recorded position in red.
+Move two in scramble 04 is `D`, a 90° turn of the bottom layer. The holding gripper touches the rotating layer during **20 of the 200 control ticks**, causing the original policy to fail the move. On hardware, the same contact could obstruct the turn or jam the cube. The replay pauses at the contact and marks its location with a red circle. PS records **0/200** wrong-layer contact ticks on the same move and completes all eight moves. [Watch MP4](assets/showcase/cube-solve.mp4)
 
 ### Connect Four
 
-A reflected board calls for a correspondingly reflected move. An analytic projection of the final action head makes the two views agree while keeping the trained encoder. The illustrated held-out position shows the original policy selecting a winning move on one board and a losing move on its reflection. The edited head finds the winning mirrored pair.
+Reflecting a Connect Four board preserves the rules and the win, draw, or loss value of each corresponding move. Column 1 on the original board, for example, maps to column 7 on the reflected board. The policy's encoder processes both orientations, so reflection swaps the two groups of features. The original action head learns separate weights for those groups and can assign different scores to corresponding moves, leading to inconsistent choices.
 
-Across **24,000 held-out endgame boards**, mirror disagreements fell from **7,928 to zero** and exact-solver optimal actions rose from **84.99% to 85.73%** across both orientations. On the boards where the original policy disagreed with its reflection, optimality rose from **79.03% to 81.29%**, compared with **79.75%** for a tuned action-bias control.
+![A held-out board and its reflection, with the moves selected by the original policy and PS.](assets/showcase/connect-four.png)
 
-### Photo retouching
+On the left, the original policy chooses column 1, a forced win according to the exact solver. On the reflected board, the winning move maps to column 7. The original policy chooses column 6, which loses against optimal play. The evaluation tracks both mirror consistency and move optimality.
 
-The Exposure policy selects a sequence of photographic edits. The WSP candidate changes **128 weights and one bias** in the learned exposure-strength regressor to reduce clipping of initially textured highlights. Mean any-channel clipping fell from **12.90% to 2.50%** across **65 eligible photos** from 72 held-out full-frame images. The paired photo bootstrap interval for the change was **−13.40 to −7.65 percentage points**.
+PS applies an analytic projection to the final action head so that reflecting the board also reflects the action scores. It reuses the trained encoder. On the pair shown, the edited policy chooses columns 1 and 7, both winning moves.
 
-The aggregate chart reports measured clipping on the held-out FiveK photos. Shadow rendering can also change when the policy selects a different exposure strength. [Exposure paper](https://arxiv.org/abs/1709.09602) · [MIT-Adobe FiveK dataset](https://data.csail.mit.edu/graphics/fivek/)
+### Exposure Photo Retouching
 
-The selected photos below show the input and both policy outputs with a matched crop. The rocket comparison shows detail around the illuminated structure at the foot of the rocket. The waterfall comparison shows texture in the bright rock face.
+Exposure selects a sequence of editing operations for a photograph. The original policy sometimes clips textured highlights to white. PS edits **128 weights and one bias** in the exposure regressor. Each example shows the input, the original output, and the PS output above a close-up of the same region.
 
-![Input and paired Exposure outputs for Falcon 9, with matching crops of the illuminated launch structure.](assets/showcase/exposure-rocket.jpg)
+![Falcon 9 input and paired Exposure outputs, with close-ups of the illuminated structure near its base.](assets/showcase/exposure-rocket.jpg)
 
-Photo by SpaceX, released into the public domain. [Photo source](https://scikit-image.org/docs/0.25.x/api/skimage.data.html#skimage.data.rocket)
+The PS output retains more detail in the illuminated structure at the base of the rocket. Photo by SpaceX, released into the public domain. [Photo source](https://scikit-image.org/docs/0.25.x/api/skimage.data.html#skimage.data.rocket)
 
-![Input and paired Exposure outputs for Yosemite Falls, with matching crops of the bright rock face.](assets/showcase/exposure-yosemite-falls.jpg)
+![Yosemite Falls input and paired Exposure outputs, with close-ups of the bright rock face.](assets/showcase/exposure-yosemite-falls.jpg)
 
-Photo by Gentry George, U.S. Fish and Wildlife Service, released into the public domain. [Photo source](https://commons.wikimedia.org/wiki/File:Yosemite_falls.jpg)
+The texture in the bright rock face beside the falls is clearer in the PS output. Photo by Gentry George, U.S. Fish and Wildlife Service, released into the public domain. [Photo source](https://commons.wikimedia.org/wiki/File:Yosemite_falls.jpg)
 
-[View the aggregate clipping chart](assets/showcase/exposure.png)
+## Paired Evaluation Results
 
-## Quick start
+Each result uses its corresponding original policy as the baseline. The original 30 cube scrambles serve as a regression set. A separately frozen set of 10 scrambles tests the edit on new initial states.
 
-From the workspace where you want to use the English skill, clone the repository into the project’s Codex skills directory. Repository access is required.
+| Case | Evaluation set | Metric | Original | PS |
+| --- | --- | --- | ---: | ---: |
+| Bimanual goblet handoff | 28 paired new simulation starts | Complete handoff and stable placement ↑ | 18/28 | **25/28** |
+| Bimanual goblet handoff | The 22 starts for the `1→0` direction | Complete handoff and stable placement ↑ | 14/22 | **21/22** |
+| Bimanual cube solving | 30 original scrambles | Complete solves ↑ | 21/30 | **25/30** |
+| Bimanual cube solving | 5 new ordinary scrambles | Complete solves ↑ | 4/5 | **5/5** |
+| Bimanual cube solving | 5 new scrambles with a high-risk move sequence | Complete solves ↑ | 0/5 | **5/5** |
+| Connect Four | 24,000 held-out endgames and their reflections | Mirror disagreements ↓ | 7,928 | **0** |
+| Connect Four | The same endgames, counting both orientations | Optimal move rate ↑ | 84.99% | **85.73%** |
+| Connect Four | Endgames where the original policy disagreed with its reflection | Optimal move rate ↑ | 79.03% | **81.29%** |
+| Exposure photo retouching | 65 eligible held-out photos | Mean clipping of recoverable highlights ↓ | 12.90% | **2.50%** |
+
+- The goblet confirmation set intentionally includes more handoffs in the `1→0` direction. The cube replay preserved all 21 original successes.
+- An exact solver determines optimal moves in Connect Four. On the endgames where the original policy disagreed with its reflection, the tuned action-bias control achieved **79.75%**.
+- Of 72 held-out full-frame FiveK photos, 65 qualified for the highlight metric. A highlight counts as clipped if any color channel clips. The 95% paired bootstrap interval for the change was **−13.40 to −7.65 percentage points**. Exposure adjustments can also affect shadow rendering. [Highlight clipping chart](assets/showcase/exposure.png)
+
+### Policy Size and Edit Size
+
+| Case | Original policy parameters | Parameters changed by PS | Share changed |
+| --- | ---: | ---: | ---: |
+| Bimanual goblet handoff | 90,281 | **6** | 0.0066% |
+| Bimanual cube solving | 2,084,480 | **5,474** | 0.2626% |
+| Connect Four | 134,735 | **1,798** | 1.3345% |
+| Exposure photo retouching | 6,123,680 | **129** | 0.0021% |
+
+In all four cases, PS changed less than **1.34%** of the original policy's parameters and improved the target metric in paired evaluation. For the goblet handoff, editing six parameters that control the receiving arm's approach and phase timing raised the rate of complete handoffs and stable placements by **25 percentage points** on the new starts.
+
+In these tasks, the agent traced the policy computation to identify parameters related to the target behavior and predicted how editing them would affect actions. The observed changes in paired evaluation provide experimental evidence for the role of those parameters in the tasks tested. All four repairs used direct edits and **zero gradient training steps**.
+
+## Why Choose PS?
+
+### When Is PS a Good Fit?
+
+Gradient training and fine-tuning update weights using objectives derived from examples or rewards. WSP starts with a target behavior and the computations in an existing network, constructs a direct weight edit, and tests it through task evaluation. PS organizes this approach into diagnosis, editing, and validation. Training can build a policy's capabilities, and PS can then address a specific problem in that policy. [Original Weight-Space Programming article](https://rikiyat.github.io/blog/weight-space-programming/)
+
+| Task condition | Try PS first | Prioritize training or fine-tuning |
+| --- | --- | --- |
+| Existing capabilities | The policy can already perform the task and needs a specific failure fixed or a behavior adjusted | The policy needs to learn new skills or representations from demonstrations, labels, or rewards |
+| Failure mechanism | The behavior maps to a testable relationship such as mirror symmetry, a trajectory offset, or exposure strength | The desired improvement spans many input patterns and calls for learning a complex mapping from data |
+| Available feedback | Representative failures, successes, and an existing evaluator can test candidate edits | Training signals cover the target distribution and a training pipeline is available |
+| Scope of change | The goal is specific enough to predict which inputs, phases, or actions should change | The goal spans several capabilities or a substantial distribution shift |
+
+When the effect of a parameter is predictable, PS can encode a constraint or correction directly in the relevant weights. Screening a small set of candidates can reduce the need to collect training data and run gradient optimization for that repair. The edit scope, expected behavior, and actual parameter diff can each be reviewed.
+
+The total cost includes diagnosis, candidate screening, and task evaluation. Checking the target improvement alongside the original policy's successes helps determine whether to continue editing or move to training and fine-tuning.
+
+### What the Skill Provides
+
+- **Trace failures to relevant weights.** Follow the original policy's computations, formulate a testable hypothesis, and choose the edit location and magnitude. Connect Four encodes reflection symmetry in the action head, and the cube repair edits the trajectory anchors for the affected moves.
+- **Produce a checkpoint that can be reloaded.** Save the candidate in a format the model can load, verify it through native inference, and report the actual parameter diff. Sparse edits can also be saved as portable checkpoint patches.
+- **Use the same workflow across policy types.** The policy adapter handles checkpoint loading, inputs, outputs, and state. The task evaluator handles initial conditions, execution, and acceptance criteria. Static tasks can use fixed inputs, and robotics tasks can use an existing simulator to test closed-loop behavior.
+- **Screen on a small set and confirm on held-out cases.** Screen candidates on representative failures and successes. Freeze a candidate before comparing it with the original policy on held-out cases. Long evaluations can resume sample by sample after checking that the models, inputs, and evaluation setup match.
+
+## Quick Start
+
+### Install
+
+From the root of the project where you want to use the skill, run the following command. Access to the GitHub repository is required. [Codex skill setup](https://developers.openai.com/codex/skills)
 
 ```bash
 git clone https://github.com/Pan-Chera/robot-weight-programming.git \
   .agents/skills/robot-weight-programming
 ```
 
-Open that workspace in Codex and invoke `$robot-weight-programming`. Point it to the model and inference command, identify a failure and something the policy should keep doing well, and set a screening budget. [Codex skill setup](https://developers.openai.com/codex/skills)
+### Repair a Policy Behavior
+
+Open the project in Codex and provide the original checkpoint, native inference command, and representative inputs. Specify one behavior to fix, the behavior you want to preserve, and a screening budget. Closed-loop tasks also need the existing evaluator, initial states or a reset procedure, and acceptance criteria.
 
 ```text
 Use $robot-weight-programming on this frozen checkpoint.
 The native inference command and labeled examples are in this workspace.
-Improve the target behavior described in the examples while preserving the
-original successes. Diagnose the relevant computation, screen direct weight
-edits on the development cases, then freeze one candidate and compare it
-with the original checkpoint on the reserved cases.
+Improve the target behavior shown in the examples and preserve the original
+successes. Diagnose the relevant computation and screen direct weight edits
+on the development cases. Freeze one candidate and compare it against the
+original checkpoint on the held-out cases.
 ```
 
-For an **offline policy**, representative inputs and a task metric are enough to begin. If the claim concerns **closed-loop behavior**, also provide the existing evaluator, initial states or reset procedure, and acceptance criteria. The model runtime belongs to the task adapter, so the skill can work with native checkpoints and different evaluators.
+A completed run can produce an edited checkpoint, a parameter diff, and a paired report identifying the original policy, evaluation metrics, and behavior retained.
 
-A completed run can produce an edited checkpoint, a parameter diff, and a paired report with the baseline identity, metrics, and behavior retained. Long evaluations can resume by sample after checking that the models, sample inputs, and evaluation setup match the saved results.
+## Documentation
 
-## Inside the skill
-
-| Entry | What it covers |
-| --- | --- |
-| [Skill entry point](SKILL.md) | Baseline reproduction, mechanism diagnosis, candidate screening, and confirmation |
-| [Policy adapters](references/adapter-and-integrity.md) | Native loading, state and randomness, save/reload checks, and parameter integrity |
-| [Interventions](references/intervention-workflow.md) | Choosing a weight edit and testing capability retention |
-| [Evaluation and resumption](references/research-efficiency.md) | Budget, screening and stopping rules, held-out confirmation, and sample-level continuation |
-| [Robotics workflow](references/robot-workflow.md) | Optional guidance for simulation and physical robot tasks |
-| [Helpers](scripts/) | Affine edits, portable checkpoint patches, and evidence checks |
+- Reproduce the original policy, diagnose the mechanism, screen candidates, and confirm the effect. [Skill entry point](SKILL.md)
+- Connect native inference and handle state, randomness, saving, and reloading. [Policy adapters](references/adapter-and-integrity.md)
+- Choose a weight edit and check for retained capabilities. [Weight interventions](references/intervention-workflow.md)
+- Set evaluation budgets, stopping rules, and conditions for resuming. [Evaluation and resumption](references/research-efficiency.md)
+- Connect an existing simulation or hardware evaluation workflow. [Robotics workflow](references/robot-workflow.md)
+- Use affine editing, checkpoint patches, and evidence checking scripts. [Utilities](scripts/)
 
 ## Authors
 
-**Guanxing Qu** and **Xueyan Zou**  
-Interactive Embodied Intelligence Lab (IEI Lab), College AI, Tsinghua University. [IEI Lab](https://maureenzou.github.io/lab.html) · [Multi-Agent CAD](https://github.com/Pan-Chera/Multi-Agent-CAD)
+**Guanxing Qu** and **Xueyan Zou**. [IEI Lab](https://maureenzou.github.io/lab.html) · [Multi-Agent CAD](https://github.com/Pan-Chera/Multi-Agent-CAD)
 
 ## Citation
 
-If you use this skill, cite the software repository.
+If you use this skill in your research, please cite the software repository. [Machine-readable citation](CITATION.cff)
 
 ```bibtex
-@misc{qu2026policywsp,
+@misc{qu2026policysculpt,
   author       = {Qu, Guanxing and Zou, Xueyan},
-  title        = {{Policy Weight-Space Programming}},
+  title        = {{PolicySculpt (PS): Direct Weight Editing for Trained Policies}},
   year         = {2026},
   howpublished = {GitHub repository},
   url          = {https://github.com/Pan-Chera/robot-weight-programming}
 }
 ```
 
-The skill is inspired by Rikiya Takehi, Jayden Teoh, Alex Zhang, and Omar Khattab’s *Sparks of Weight-Space Programming* (2026). [Original article](https://rikiyat.github.io/blog/weight-space-programming/)
+### Related Work
+
+- **Weight-Space Programming**. Rikiya Takehi, Jayden Teoh, Alex Zhang, and Omar Khattab (2026), *Sparks of Weight-Space Programming*. [Article](https://rikiyat.github.io/blog/weight-space-programming/)
+- **Exposure**. Yuanming Hu, Hao He, Chenxi Xu, Baoyuan Wang, and Stephen Lin (2018), *Exposure: A White-Box Photo Post-Processing Framework*. [Paper](https://arxiv.org/abs/1709.09602)
+- **MIT-Adobe FiveK**. Vladimir Bychkovsky, Sylvain Paris, Eric Chan, and Frédo Durand (2011), *Learning Photographic Global Tonal Adjustment with a Database of Input / Output Image Pairs*. [Dataset and citation](https://data.csail.mit.edu/graphics/fivek/)

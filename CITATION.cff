@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: If you use this software, please cite it using this metadata.
 type: software
-title: Policy Weight-Space Programming
+title: 'PolicySculpt (PS): Direct Weight Editing for Trained Policies'
 authors:
   - family-names: Qu
     given-names: Guanxing
