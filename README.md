@@ -8,12 +8,7 @@ Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.ht
 
 [![Codex Skill](https://img.shields.io/badge/Codex-Skill-3069b3.svg)](#codex) [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-a65535.svg)](#claude-code) [![Paired simulation evaluation](https://img.shields.io/badge/Evaluation-Paired%20simulation-5e5aa7.svg)](#robotics-results)
 
-## Robotics Results
-
-| Simulated task | Paired test | Original → Edited | Parameters changed |
-| --- | --- | ---: | ---: |
-| Bimanual goblet handoff | Successful handoff and stable placement on 28 new starts | **18/28 → 25/28** | **6** of 90,281 |
-| Bimanual 2×2 cube solving | Full solves on the same 30 scrambles | **21/30 → 25/30** | **5,474** of 2,084,480 |
+## Robotics Demos
 
 ### Bimanual Goblet Handoff
 
@@ -44,6 +39,13 @@ On the reflected board below, the original policy picked a losing move in column
 We edited **129 parameters** in the exposure regressor of a **6,123,680-parameter** policy and reduced mean highlight clipping from **12.90% to 2.50%** across **65 eligible held-out FiveK photos**. In the launch-pad close-up, the edited exposure preserves detail around the base of the rocket. [Full photo comparison](assets/showcase/exposure-rocket.jpg) · [Yosemite Falls example](assets/showcase/exposure-yosemite-falls.jpg)
 
 ![The same Falcon 9 launch-pad crop under the original exposure policy on the left and the edited policy on the right.](assets/showcase/exposure-preview.jpg)
+
+## Robotics Results
+
+| Simulated task | Paired test | Original → Edited | Parameters changed |
+| --- | --- | ---: | ---: |
+| Bimanual goblet handoff | Successful handoff and stable placement on 28 new starts | **18/28 → 25/28** | **6** of 90,281 |
+| Bimanual 2×2 cube solving | Full solves on the same 30 scrambles | **21/30 → 25/30** | **5,474** of 2,084,480 |
 
 ## How It Works for Robots
 
