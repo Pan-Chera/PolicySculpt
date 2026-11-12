@@ -31,10 +31,19 @@ The replay kept all **21** original solves. On a separate set of 10 new scramble
 
 ## Beyond Robotics
 
-The same workflow can run on fixed inputs. We used it in two offline tasks.
+The same weight-editing workflow also applies to policies evaluated on fixed inputs.
 
-- **Connect Four.** Editing the action head reduced mirror disagreements from **7,928 to 0** across 24,000 held-out endgames. The edit changed **1,798** of 134,735 parameters. [Board comparison](assets/showcase/connect-four.png)
-- **Photo retouching.** Editing the exposure regressor reduced mean highlight clipping from **12.90% to 2.50%** across 65 eligible held-out FiveK photos. The edit changed **129** of 6,123,680 parameters. [Photo comparison](assets/showcase/exposure-rocket.jpg)
+### Connect Four
+
+On the reflected board below, the original policy picked a losing move in column 6. The edited policy picked the winning move in column 7, mirroring column 1 on the original board. We edited **1,798 parameters** in the action head of a **134,735-parameter** policy and reduced mirror disagreements from **7,928 to 0** across **24,000 held-out endgames**.
+
+![One Connect Four position and its mirror. The original policy picks columns 1 and 6, while the edited policy picks winning columns 1 and 7.](assets/showcase/connect-four.png)
+
+### Photo Retouching
+
+We edited **129 parameters** in the exposure regressor of a **6,123,680-parameter** policy and reduced mean highlight clipping from **12.90% to 2.50%** across **65 eligible held-out FiveK photos**. In the launch-pad close-up, the edited exposure preserves detail around the base of the rocket. [Full photo comparison](assets/showcase/exposure-rocket.jpg) · [Yosemite Falls example](assets/showcase/exposure-yosemite-falls.jpg)
+
+![The same Falcon 9 launch-pad crop under the original exposure policy on the left and the edited policy on the right.](assets/showcase/exposure-preview.jpg)
 
 ## How It Works for Robots
 
