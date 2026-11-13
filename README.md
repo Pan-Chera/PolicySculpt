@@ -77,6 +77,10 @@ claude --plugin-dir "$PWD/.policysculpt/claude-code"
 
 Invoke `/policysculpt:edit` to edit a policy. Use `/policysculpt:embodied` for standalone robot trace analysis or paired simulation. [Claude Code plugin guide](claude-code/README.md)
 
+### Try a Standalone Edit
+
+The [first weight edit](docs/first-edit.md) shows how to edit, save, reload, and evaluate a small policy using the bundled NumPy helper.
+
 ### Give the Agent a Task
 
 Provide the checkpoint, native inference command, and an evaluator with representative failures and successes.
@@ -88,6 +92,16 @@ with the original on held-out cases. Check that the original successes still pas
 ```
 
 [Skill instructions](SKILL.md) · [Robotics setup](references/robot-workflow.md) · [Policy adapters](references/adapter-and-integrity.md) · [Evaluation and resumption](references/research-efficiency.md)
+
+## Documentation
+
+- [Case evidence and reproducibility](docs/reproducibility.md)
+- [Contributing and release checks](CONTRIBUTING.md)
+- [Security reporting](SECURITY.md)
+
+## License
+
+PolicySculpt code and documentation are available under the [MIT License](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for demo photo credits and external assets.
 
 ## Authors and Citation
 

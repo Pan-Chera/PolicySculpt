@@ -9,4 +9,5 @@ authors:
   - family-names: Zou
     given-names: Xueyan
     affiliation: Interactive Embodied Intelligence Lab, Tsinghua University
-repository-code: https://github.com/Pan-Chera/robot-weight-programming
+repository-code: https://github.com/Pan-Chera/PolicySculpt
+license: MIT
