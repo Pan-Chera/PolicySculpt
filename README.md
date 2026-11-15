@@ -18,9 +18,11 @@ With PolicySculpt, we edited six learned parameters that govern the receiving ar
 
 ### Bimanual 2×2 Cube Solving
 
-We shifted learned trajectory anchors for the holding gripper away from the rotating layer. In this close-up, cross-layer contact fell from **41/200 to 0/200 control steps**. Red marks contact, and green marks clearance. [Second close-up](assets/showcase/cube-case-28.gif)
+We updated the saved joint targets for the arm holding the cube so its gripper would clear the rotating layer. In this close-up, cross-layer contact fell from **41/200 to 0/200 control steps**. Red marks contact, and green marks clearance. [Second close-up](assets/showcase/cube-case-28.gif)
 
 ![Simulated bottom-layer turn. The original gripper contacts the rotating layer on the left. The edited gripper clears it on the right.](assets/showcase/cube-case-06.gif)
+
+**Policy architecture.** This cube policy uses a table of joint targets with a linear pose correction. It has no MLP or Transformer. The controller looks up the next few reference joint angles by move and time, then adjusts them based on the observed cube pose. A separate fitted trajectory model handles the 180° bottom-layer turn. We used robot kinematics to map a 1.2 mm gripper target shift to changes in the saved reference angles for the holding arm.
 
 The replay kept all **21** original solves. On a separate set of 10 new scrambles, split evenly between ordinary and high-risk move sequences, full solves rose from **4/10 to 10/10**.
 
