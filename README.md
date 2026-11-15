@@ -6,7 +6,7 @@ PolicySculpt brings direct weight editing for embodied control to **Codex and Cl
 
 Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.html)
 
-[![Codex Skill](https://img.shields.io/badge/Codex-Skill-3069b3.svg)](#codex) [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-a65535.svg)](#claude-code) [![Paired simulation evaluation](https://img.shields.io/badge/Evaluation-Paired%20simulation-5e5aa7.svg)](#robotics-results)
+[![Codex Skill](https://img.shields.io/badge/Codex-Skill-3069b3.svg)](#codex) [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-a65535.svg)](#claude-code) [![Paired simulation evaluation](https://img.shields.io/badge/Evaluation-Paired%20simulation-5e5aa7.svg)](#evaluation-results)
 
 ## Robotics Demos
 
@@ -30,22 +30,24 @@ The same weight-editing workflow also applies to policies evaluated on fixed inp
 
 ### Connect Four
 
-On the reflected board below, the original policy picked a losing move in column 6. The edited policy picked the winning move in column 7, mirroring column 1 on the original board. We edited **1,798 parameters** in the action head of a **134,735-parameter** policy and reduced mirror disagreements from **7,928 to 0** across **24,000 held-out endgames**.
+On the reflected board below, the original policy picked a losing move in column 6. After we edited the action head, the policy picked the winning move in column 7, mirroring column 1 on the original board.
 
 ![One Connect Four position and its mirror. The original policy picks columns 1 and 6, while the edited policy picks winning columns 1 and 7.](assets/showcase/connect-four.png)
 
 ### Photo Retouching
 
-We edited **129 parameters** in the exposure regressor of a **6,123,680-parameter** policy and reduced mean highlight clipping from **12.90% to 2.50%** across **65 eligible held-out FiveK photos**. In the launch-pad close-up, the edited exposure preserves detail around the base of the rocket. [Full photo comparison](assets/showcase/exposure-rocket.jpg) · [Yosemite Falls example](assets/showcase/exposure-yosemite-falls.jpg)
+We edited the policy's exposure regressor. In the launch-pad close-up, the edited exposure preserves detail around the base of the rocket. [Full photo comparison](assets/showcase/exposure-rocket.jpg) · [Yosemite Falls example](assets/showcase/exposure-yosemite-falls.jpg)
 
 ![The same Falcon 9 launch-pad crop under the original exposure policy on the left and the edited policy on the right.](assets/showcase/exposure-preview.jpg)
 
-## Robotics Results
+## Evaluation Results
 
-| Simulated task | Paired test | Original → Edited | Parameters changed |
+| Task | Evaluation metric | Original → Edited | Parameters changed |
 | --- | --- | ---: | ---: |
 | Bimanual bowl grasping and stacking | Three-bowl stacks on the same 100 fixed regression starts | **95/100 → 98/100** | **49,152** of 144,872 in the MLP |
 | Bimanual goblet handoff | Successful handoff and stable placement on 28 new starts | **18/28 → 25/28** | **6** of 90,281 |
+| Connect Four | Mirror disagreements on 24,000 held-out endgames | **7,928 → 0** | **1,798** of 134,735 |
+| Photo retouching | Mean highlight clipping on 65 eligible held-out FiveK photos | **12.90% → 2.50%** | **129** of 6,123,680 |
 
 The bowl-stacking candidate repaired **4 of 5** original failures and retained **94 of 95** original successes. The fixed regression set was used to compare candidates. The full checkpoint has **209,921** learned parameters, including the bowl locator.
 
