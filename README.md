@@ -57,7 +57,7 @@ The policy adapter runs the robot’s existing inference code. The task evaluato
 
 ## Quick Start
 
-Start in the project where you want to edit a policy. Access to the private repository is required.
+Start in the project where you want to edit a policy.
 
 ### Codex
 
