@@ -2,7 +2,7 @@
 
 **Direct weight editing for robot policies.**
 
-PolicySculpt brings direct weight editing for embodied control to **Codex and Claude Code**. We used it to improve bimanual goblet handoff and 2×2 cube solving in paired simulation tests with **zero gradient training steps**.
+PolicySculpt brings direct weight editing for embodied control to **Codex and Claude Code**. We used it to improve bimanual bowl stacking and goblet handoff in paired simulation tests with **zero gradient training steps**.
 
 Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.html)
 
@@ -10,21 +10,19 @@ Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.ht
 
 ## Robotics Demos
 
+### Bimanual Bowl Grasping and Stacking
+
+Two xArm7 arms pick up bowls and build a three-bowl stack in MuJoCo. In the paired replay below, the original policy loses the last bowl. After the edit, that bowl stays in the stack. [Watch MP4](assets/showcase/bowl-stacking.mp4)
+
+![Paired simulation replay from seed 14070. The original policy loses the last bowl on the left. The edited policy stacks all three bowls on the right.](assets/showcase/bowl-stacking.gif)
+
+A CNN locates the bowls at reset. A behavior-cloned MLP uses these locations, live RGB features, and joint feedback to control both arms. We edited one output weight matrix in the MLP's timing branch to adjust when the right gripper opens and how it descends near the stack.
+
 ### Bimanual Goblet Handoff
 
 With PolicySculpt, we edited six learned parameters that govern the receiving arm’s approach and phase timing. In the same-start example below, the original policy leaves the goblet tilted **12°**, while the edited policy sets it down upright. [Watch MP4](assets/showcase/goblet-handoff.mp4)
 
 ![Simulated goblet placement from the same initial state. Original policy on the left, edited policy on the right.](assets/showcase/goblet-handoff.gif)
-
-### Bimanual 2×2 Cube Solving
-
-We updated the saved joint targets for the arm holding the cube so its gripper would clear the rotating layer. In this close-up, cross-layer contact fell from **41/200 to 0/200 control steps**. Red marks contact, and green marks clearance. [Second close-up](assets/showcase/cube-case-28.gif)
-
-![Simulated bottom-layer turn. The original gripper contacts the rotating layer on the left. The edited gripper clears it on the right.](assets/showcase/cube-case-06.gif)
-
-**Policy architecture.** This cube policy uses a table of joint targets with a linear pose correction. It has no MLP or Transformer. The controller looks up the next few reference joint angles by move and time, then adjusts them based on the observed cube pose. A separate fitted trajectory model handles the 180° bottom-layer turn. We used robot kinematics to map a 1.2 mm gripper target shift to changes in the saved reference angles for the holding arm.
-
-The replay kept all **21** original solves. On a separate set of 10 new scrambles, split evenly between ordinary and high-risk move sequences, full solves rose from **4/10 to 10/10**.
 
 ## Beyond Robotics
 
@@ -46,8 +44,10 @@ We edited **129 parameters** in the exposure regressor of a **6,123,680-paramete
 
 | Simulated task | Paired test | Original → Edited | Parameters changed |
 | --- | --- | ---: | ---: |
+| Bimanual bowl grasping and stacking | Three-bowl stacks on the same 100 fixed regression starts | **95/100 → 98/100** | **49,152** of 144,872 in the MLP |
 | Bimanual goblet handoff | Successful handoff and stable placement on 28 new starts | **18/28 → 25/28** | **6** of 90,281 |
-| Bimanual 2×2 cube solving | Full solves on the same 30 scrambles | **21/30 → 25/30** | **5,474** of 2,084,480 |
+
+The bowl-stacking candidate repaired **4 of 5** original failures and retained **94 of 95** original successes. The fixed regression set was used to compare candidates. The full checkpoint has **209,921** learned parameters, including the bowl locator.
 
 ## How It Works for Robots
 
