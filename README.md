@@ -12,9 +12,9 @@ Tsinghua University IEI Lab · [Lab website](https://maureenzou.github.io/lab.ht
 
 ### Bimanual Bowl Grasping and Stacking
 
-Two xArm7 arms pick up bowls and build a three-bowl stack in MuJoCo. In the paired replay below, the original policy loses the last bowl. After the edit, that bowl stays in the stack. [Watch MP4](assets/showcase/bowl-stacking.mp4)
+Two xArm7 arms pick up bowls and build a three-bowl stack in MuJoCo. In the paired replay below (seed 14067), the original policy leaves the first two bowls tilted and out of alignment. The edited policy keeps those bowls nested and stacks the third. [Watch MP4](assets/showcase/bowl-stacking.mp4)
 
-![Paired simulation replay from seed 14070. The original policy loses the last bowl on the left. The edited policy stacks all three bowls on the right.](assets/showcase/bowl-stacking.gif)
+![Paired simulation replay from seed 14067. The first two bowls slide out of alignment on the left, while the edited policy stacks all three bowls on the right.](assets/showcase/bowl-stacking.gif)
 
 A CNN locates the bowls at reset. A behavior-cloned MLP uses these locations, live RGB features, and joint feedback to control both arms. We edited one output weight matrix in the MLP's timing branch to adjust when the right gripper opens and how it descends near the stack.
 
